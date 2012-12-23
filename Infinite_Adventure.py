@@ -37,16 +37,16 @@ class Game(object):
        
         (self.mx, self.my) = pygame.mouse.get_pos()
         if self.moveup == True:
-            self.ky -= 20
+            self.ky -= 10
         if self.movedown == True:
-            self.ky += 20
+            self.ky += 10
         if self.moveleft == True:
-            self.kx -= 20
+            self.kx -= 10
         if self.moveright == True:
-            self.kx += 20     
+            self.kx += 10     
      
     def draw(self):
-# This is the actual grapics, code must be added after the fill line.
+# This is the actual graphics, code must be added after the fill line.
         
         self.screen.fill(color_blue)
         self.screen.blit(self.mouse_image, (self.mx,self.my))
