@@ -4,7 +4,7 @@ Created on Dec 22, 2012
 @author: aurelio
 '''
 # Importing dependencies:
-import pygame
+import pygame, math
 from pygame.locals import *
 
 # Setting up the screen
@@ -29,13 +29,16 @@ class Game(object):
         self.moveleft = False
         self.moveright = False
         self.clock = pygame.time.Clock()
+        self.rotangle = 0
 
         self.quit = False
         
     def update(self):
 # This function is called in the gameloop, and so I use it to run code.
-       
-        (self.mx, self.my) = pygame.mouse.get_pos()
+# This updates the position of the mouse image.        
+        (self.mx, self.my) = pygame.mouse.get_pos()   
+            
+# This updates the movement of the player sprite
         if self.moveup == True:
             self.ky -= 10
         if self.movedown == True:
@@ -43,14 +46,24 @@ class Game(object):
         if self.moveleft == True:
             self.kx -= 10
         if self.moveright == True:
-            self.kx += 10     
-     
+            self.kx += 10
+
+# This updates the rotation of the playersprite towards the mouse
+        mouse_x, mouse_y = self.mx, self.my
+        player_x, player_y = self.kx, self.ky 
+        angle = math.atan2(player_x-mouse_x, player_y-mouse_y)
+        angle = angle * (180/ math.pi)
+        angle = (angle) % 360
+          
+        self.rotangle = angle + 90
+        self.player = pygame.transform.rotate(self.player_image, self.rotangle)
+
     def draw(self):
 # This is the actual graphics, code must be added after the fill line.
         
         self.screen.fill(color_blue)
         self.screen.blit(self.mouse_image, (self.mx,self.my))
-        self.screen.blit(self.player_image, (self.kx, self.ky))
+        self.screen.blit(self.player, (self.kx, self.ky))
         
         pygame.display.flip()
         
