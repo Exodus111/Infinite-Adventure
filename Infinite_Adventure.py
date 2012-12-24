@@ -1,4 +1,4 @@
-#!/usr/bin/env pytho
+#!/usr/bin/env python
 '''
 Created on Dec 22, 2012
 
@@ -17,6 +17,7 @@ class Game(object):
 # Here I load stuff up, and set a lot of global variables :-P
         
         pygame.init()
+        pygame.mouse.set_visible(False)
         self.screen = pygame.display.set_mode(screen_mode)
         pygame.display.set_caption("Pygame stuff")
         self.mouse_image = pygame.image.load("Red_Sights.png")
