@@ -8,7 +8,7 @@ import pygame, math
 from pygame.locals import *
 
 # Setting up the screen
-screen_mode = (640, 480)
+screen_mode = (1240, 960)
 color_blue = 100,149,237
 
 class Game(object):      
