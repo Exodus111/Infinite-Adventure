@@ -1,3 +1,4 @@
+#!/usr/bin/env pytho
 '''
 Created on Dec 22, 2012
 
@@ -75,22 +76,22 @@ class Game(object):
                 if event.type == QUIT:
                     self.quit = True
                 elif event.type == KEYDOWN:
-                    if event.key == K_w:
+                    if event.key == K_w or event.key == K_UP:
                         self.moveup = True
-                    if event.key == K_a:
+                    if event.key == K_a or event.key == K_LEFT:
                         self.moveleft = True
-                    if event.key == K_s:
+                    if event.key == K_s or event.key == K_DOWN:
                         self.movedown = True
-                    if event.key == K_d:
+                    if event.key == K_d or event.key == K_RIGHT:
                         self.moveright = True
                 elif event.type == KEYUP:
-                    if event.key == K_w:
+                    if event.key == K_w or event.key == K_UP:
                         self.moveup = False
-                    if event.key == K_a:
+                    if event.key == K_a or event.key == K_LEFT:
                         self.moveleft = False
-                    if event.key == K_s:
+                    if event.key == K_s or event.key == K_DOWN:
                         self.movedown = False
-                    if event.key == K_d:
+                    if event.key == K_d or event.key == K_RIGHT:
                         self.moveright = False
                           
             self.update()
