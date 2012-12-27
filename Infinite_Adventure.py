@@ -9,7 +9,9 @@ import pygame, math
 from pygame.locals import *
 
 # Setting up the screen
-screen_mode = (1240, 960)
+screen_width = (1240)
+screen_height = (960)
+screen_mode = (screen_width, screen_height)
 color_blue = 100,149,237
 
 class Game(object):      
@@ -22,10 +24,10 @@ class Game(object):
         pygame.display.set_caption("Pygame stuff")
         self.mouse_image = pygame.image.load("Red_Sights.png")
         self.player_image = pygame.image.load("Arrow_cursor.png")
-        self.mx = (screen_mode[0])/2
-        self.my = (screen_mode[1])/2
-        self.kx = (screen_mode[0])/2
-        self.ky = (screen_mode[1])/2
+        self.mx = (screen_width)/2
+        self.my = (screen_height)/2
+        self.kx = (screen_width)/2
+        self.ky = (screen_height)/2
         self.moveup = False
         self.movedown = False
         self.moveleft = False
@@ -59,6 +61,16 @@ class Game(object):
           
         self.rotangle = angle + 90
         self.player = pygame.transform.rotate(self.player_image, self.rotangle)
+        
+# This is the collision detection for the outer walls.
+        if self.kx >= (screen_width - 50):
+            self.kx = (screen_width - 50)
+        elif self.kx <= -30:
+            self.kx = -30
+        if self.ky >= (screen_height - 50):
+            self.ky = (screen_height - 50)
+        elif self.ky <= -30:
+            self.ky = -30
 
     def draw(self):
 # This is the actual graphics, code must be added after the fill line.
