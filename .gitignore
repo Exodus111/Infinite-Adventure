@@ -1,4 +1,6 @@
 *.pyc
 .project
 .pydevproject
+.directory
+
 
