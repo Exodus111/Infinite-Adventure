@@ -15,6 +15,7 @@ class GameState(object):
     def __init__(self, size=(640, 480), fill=(255, 255, 255)):   
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
+        pygame.mouse.set_visible(False)      
         self.screen = pygame.display.set_mode(size)
         self.screen.fill(fill)
         self.clock = pygame.time.Clock()
@@ -56,6 +57,13 @@ class GameState(object):
         angle = angle * (180/ math.pi)
         angle = (angle) % 360
         return angle
+    
+    def rotate_image(self, image, angle):
+        img_rect = image.get_rect()
+        img_rotd = pygame.transform.rotate(image, angle)
+        img_rect.center = img_rotd.get_rect().center
+        img_rotd = img_rotd.subsurface(img_rect).copy()
+        return img_rotd
     
 # This function is also run in the mainloop, lots of code will go here, but mostly in child classes.
     def update(self): 

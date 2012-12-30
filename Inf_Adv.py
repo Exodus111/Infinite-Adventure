@@ -19,9 +19,13 @@ class Game(GameState):
         level1 = [line.strip() for line in open('level_1.txt')]
         self.walls, self.end_rect = self.draw_map(level1, 16, 16)
         
+        self.mouse_image = pygame.image.load("Red_Sights.png")
+        self.mouse_pos = (0, 0)
+        
         self.player_rect = pygame.Rect(32, 32, 16, 16)
         self.player_image = pygame.image.load("Arrow_cursor.png")
         self.player_moveUp, self.player_moveLeft, self.player_moveDown, self.player_moveRight = False, False, False, False
+        self.player_rot = 90
         
     def update(self):
         if self.player_moveUp == True:
@@ -32,6 +36,8 @@ class Game(GameState):
             self.player_rect.y += 5
         if self.player_moveRight == True:
             self.player_rect.x += 5
+        
+        self.playerimg = self.rotate_image(self.player_image, (self.player_rot + 90))
             
     
     def draw(self):
@@ -41,7 +47,8 @@ class Game(GameState):
         pygame.draw.rect(self.screen, (self.yellowColor), self.end_rect)
         
         pygame.draw.rect(self.screen, (255, 255, 255), self.player_rect )
-        self.screen.blit(self.player_image, (self.player_rect.x, self.player_rect.y))
+        self.screen.blit(self.playerimg, (self.player_rect.x, self.player_rect.y))
+        self.screen.blit(self.mouse_image, self.mouse_pos)
      
     
     def key_down(self, key):
@@ -72,8 +79,9 @@ class Game(GameState):
         pass
     
     def mouse_motion(self, buttons, pos, rel):
-        pass
-    
+        self.mouse_pos = pos
+        self.player_rot = self.rotate((self.player_rect.x, self.player_rect.y), self.mouse_pos)
+       
     
 
             
