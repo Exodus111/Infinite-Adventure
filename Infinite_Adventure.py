@@ -55,6 +55,7 @@ class Game(object):
 # This updates the rotation of the playersprite towards the mouse
         mouse_x, mouse_y = self.mx, self.my
         player_x, player_y = self.kx, self.ky 
+        
         angle = math.atan2(player_x-mouse_x, player_y-mouse_y)
         angle = angle * (180/ math.pi)
         angle = (angle) % 360
