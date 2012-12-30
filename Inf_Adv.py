@@ -17,27 +17,47 @@ class Game(GameState):
         self.yellowColor = (255, 255, 0)
               
         level1 = [line.strip() for line in open('level_1.txt')]
-        self.walls, self.end_rect = self.draw_map(level1, 16, 16)
+        self.walls, self.end_rect = self.draw_map(level1, 32, 32)
         
         self.mouse_image = pygame.image.load("Red_Sights.png")
         self.mouse_pos = (0, 0)
         
-        self.player_rect = pygame.Rect(32, 32, 16, 16)
+        self.player_rect = pygame.Rect(132, 132, 38, 38)
         self.player_image = pygame.image.load("Arrow_cursor.png")
         self.player_moveUp, self.player_moveLeft, self.player_moveDown, self.player_moveRight = False, False, False, False
         self.player_rot = 90
         
+    def collision(self, walls, rect, direction):
+        for wall in walls:
+            if rect.colliderect(wall):
+                if direction == "UP":
+                    rect.top = wall.bottom
+                if direction == "LEFT":
+                    rect.left = wall.right
+                if direction == "DOWN":
+                    rect.bottom = wall.top
+                if direction == "RIGHT":
+                    rect.right = wall.left
+                
+                    
+        
+        
     def update(self):
         if self.player_moveUp == True:
             self.player_rect.y -= 5
+            self.collision(self.walls, self.player_rect, "UP")
         if self.player_moveLeft == True:
             self.player_rect.x -= 5
+            self.collision(self.walls, self.player_rect, "LEFT")
         if self.player_moveDown == True:
             self.player_rect.y += 5
+            self.collision(self.walls, self.player_rect, "DOWN")
         if self.player_moveRight == True:
             self.player_rect.x += 5
+            self.collision(self.walls, self.player_rect, "RIGHT")
         
         self.playerimg = self.rotate_image(self.player_image, (self.player_rot + 90))
+        
             
     
     def draw(self):
@@ -46,8 +66,8 @@ class Game(GameState):
             pygame.draw.rect(self.screen, (self.coldgreyColor), wall)
         pygame.draw.rect(self.screen, (self.yellowColor), self.end_rect)
         
-        pygame.draw.rect(self.screen, (255, 255, 255), self.player_rect )
-        self.screen.blit(self.playerimg, (self.player_rect.x, self.player_rect.y))
+        pygame.draw.rect(self.screen, (255, 255, 255), self.player_rect)
+        self.screen.blit(self.playerimg, ((self.player_rect.x -3), (self.player_rect.y -3)))
         self.screen.blit(self.mouse_image, self.mouse_pos)
      
     
