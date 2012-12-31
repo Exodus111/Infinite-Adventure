@@ -16,8 +16,7 @@ class GameState(object):
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
         pygame.mouse.set_visible(False)      
-        self.screen = pygame.display.set_mode(size)
-        self.screen.fill(fill)
+        self.screen = pygame.display.set_mode(size, DOUBLEBUF|HWSURFACE)
         self.clock = pygame.time.Clock()
         self.running = False
         
@@ -103,20 +102,25 @@ class GameState(object):
         pass
              
     def draw_map(self, map, w, h):
-        walls = []   
-        x = y = 0
+        walls = []
+        space = []   
+        x = -w
+        y = 0
         for row in map:
             for col in row:
                 if col == "W":
                     thatwall = pygame.Rect(x, y, w, h)
-                    walls.append(thatwall)                    
+                    walls.append(thatwall)
+                elif col == "S":
+                    thatspace = pygame.Rect(x, y, w, h)
+                    space.append(thatspace)
                 elif col == "E":
                     end_rect = pygame.Rect(x, y, w, h)
-                x += 16
-            y += 16
-            x = 0
+                x += w
+            y += h
+            x = -w
         
-        return walls, end_rect 
+        return walls, end_rect, space 
     
         
             
