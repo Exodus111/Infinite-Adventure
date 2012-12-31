@@ -43,7 +43,7 @@ class GameState(object):
         self.running = True
         
         while self.running:
-            # pygame.display.set_caption("FPS: %i" % self.clock.get_fps())
+            pygame.display.set_caption("Infinite Adventure. FPS: %i" % self.clock.get_fps())
             self.event_handler()
             self.update()
             self.draw()
@@ -72,6 +72,20 @@ class GameState(object):
 # This function is also called by the main loop, and will also mostly be run by child classes.
     def draw(self): 
         pass
+    
+# Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
+# the rect object to check and a string for collision.
+    def collision(self, walls, rect, direction):
+        for wall in walls:
+            if rect.colliderect(wall):
+                if direction == "UP":
+                    rect.top = wall.bottom
+                if direction == "LEFT":
+                    rect.left = wall.right
+                if direction == "DOWN":
+                    rect.bottom = wall.top
+                if direction == "RIGHT":
+                    rect.right = wall.left
     
     def key_down(self, key):
         pass

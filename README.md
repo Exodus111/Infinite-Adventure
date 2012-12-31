@@ -9,8 +9,13 @@ To do:
     2. (Add wall collision) DONE
     3. (Add collision objects) DONE
     4. (Fix the damn playersprite) DONE
-    5. Add enemy NPCs.
-    6. Add powers.
-    7. Add a rudimentary GUI.
-    8. Add leveling up.
-    9. Add a rudimentary inventory and purchase system.
+    4.1 Make the world movable.
+    5. (Load levels from files) DONE
+    5.1 Make a player starting position in the level file.
+    5.2 Make the exit block load the next level.
+    5.3 Make at least 5 levels.
+    6. Add enemy NPCs.
+    7. Add powers.
+    8. Add a rudimentary GUI.
+    9. Add leveling up.
+   10. Add a rudimentary inventory and purchase system.

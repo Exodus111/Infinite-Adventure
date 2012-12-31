@@ -26,18 +26,6 @@ class Game(GameState):
         self.player_image = pygame.image.load("Arrow_cursor.png")
         self.player_moveUp, self.player_moveLeft, self.player_moveDown, self.player_moveRight = False, False, False, False
         self.player_rot = 90
-        
-    def collision(self, walls, rect, direction):
-        for wall in walls:
-            if rect.colliderect(wall):
-                if direction == "UP":
-                    rect.top = wall.bottom
-                if direction == "LEFT":
-                    rect.left = wall.right
-                if direction == "DOWN":
-                    rect.bottom = wall.top
-                if direction == "RIGHT":
-                    rect.right = wall.left
                 
                     
         
@@ -66,7 +54,7 @@ class Game(GameState):
             pygame.draw.rect(self.screen, (self.coldgreyColor), wall)
         pygame.draw.rect(self.screen, (self.yellowColor), self.end_rect)
         
-        pygame.draw.rect(self.screen, (255, 255, 255), self.player_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255,), self.player_rect, -1)
         self.screen.blit(self.playerimg, ((self.player_rect.x -3), (self.player_rect.y -3)))
         self.screen.blit(self.mouse_image, self.mouse_pos)
      
