@@ -23,6 +23,7 @@ class Game(GameState):
         
         self.background = pygame.Surface(self.level_size)
         self.bx_pos, self.by_pos = (0, 0)
+        self.cp = (0,0)
         
         self.background.fill(self.brickColor)
         print self.screen.get_size()      
@@ -36,11 +37,29 @@ class Game(GameState):
         self.player_image = pygame.image.load("Arrow_cursor.png").convert_alpha()
         self.player_moveUp, self.player_moveLeft, self.player_moveDown, self.player_moveRight = False, False, False, False
         self.player_rot = 90
-           
-                    
+        
+
+    def find_player(self, px, py, mx, my):
+        
+        if mx >= 0:
+            player_x =  ((px - px) - mx) + px
+        elif mx < 0:
+            player_x = ((px - px) + mx) + px
+        if my >= 0:
+            player_y = ((py - py) - my) + py
+        elif my < 0:
+            player_y = ((py - py) + my) + py
+            
+        return (player_x, player_y)
+            
+        
+                
         
         
     def update(self):
+
+        self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
+        
         
         if self.player_moveUp == True:
             self.player_rect.y -= 15
@@ -59,16 +78,21 @@ class Game(GameState):
         
         if self.mouse_pos[0] >= (self.w - (self.w /8)):
             if (self.bx_pos + self.level_size[0])  != self.w:
+                #if self.bx_pos < self.player_rect.x:
                 self.bx_pos = self.bx_pos - 50
         elif self.mouse_pos[0] <= (self.w /8):
             if self.bx_pos  != 0:
+                #if (self.bx_pos + self.level_size[0]) > self.player_rect.x:
                 self.bx_pos = self.bx_pos + 50
         elif self.mouse_pos[1] >= (self.h - (self.h /8)):
             if (self.by_pos + self.level_size[1])  != self.h:
+                #if self.by_pos > self.player_rect.y:
                 self.by_pos = self.by_pos - 50
         elif self.mouse_pos[1] <= (self.w /8):
             if (self.by_pos)  != 0:
+                #if (self.by_pos + self.level_size[1]) > self.player_rect.y:
                 self.by_pos = self.by_pos + 50 
+                
         
             
     
@@ -87,6 +111,7 @@ class Game(GameState):
         
         pygame.draw.rect(self.background, (255, 255, 255,), self.player_rect, 1)
         self.background.blit(self.playerimg, ((self.player_rect.x -3), (self.player_rect.y -3)))
+    
         self.screen.blit(self.mouse_image, self.mouse_pos)
         
      
@@ -124,7 +149,7 @@ class Game(GameState):
     
     def mouse_motion(self, buttons, pos, rel):
         self.mouse_pos = pos
-        self.player_rot = self.rotate((self.player_rect.x, self.player_rect.y), self.mouse_pos)
+        self.player_rot = self.rotate((self.cp[0], self.cp[1]), self.mouse_pos)
              
     
 
