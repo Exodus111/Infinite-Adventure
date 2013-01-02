@@ -27,15 +27,17 @@ class Game(Engine):
         # Setting up some class variables for the game map, (background surface).
         self.level_size = (3200, 3200)
         self.background = pygame.Surface(self.level_size)
-        self.bx_pos, self.by_pos = (0, 0)
+        self.bx_pos, self.by_pos = (0,0)
         self.cp = (0,0)
         self.background.fill(self.brickColor)      
         # Then I load the first lvl from the external file.
         # And call the map creation method from the engine.
         level1 = [line.strip() for line in open('level_1.txt')]
-        self.blocksize = 44
-        self.walls, self.end_rect, self.space = self.draw_map(level1, self.blocksize, self.blocksize)
-        
+        level2 = [line.strip() for line in open('level_2.txt')]
+        self.blocksize = 64
+        self.generate = True
+        self.lvlnum = 1
+        self.lvls = [level1, level2]
         # Here we quickly set up an image file for the mouse cursor (making sure to convert it and keep transparency)
         self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
         self.mouse_pos = (0, 0)
@@ -48,10 +50,43 @@ class Game(Engine):
         
         self.player = Player(self.player_rect, self.player_rot, 15 )
         
+    def next_level(self, playerrect, endzonerect):
+        if playerrect.colliderect(endzonerect):
+            self.lvlnum = 2
+            self.generate = True
+    
+    def map_generate(self, generate, lvlnum, lvlfile, blocksize):
+        if generate == True:
+            if lvlnum == 1:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[0], self.blocksize, self.blocksize)
+                self.player_rect.x = self.start_rect.x
+                self.player_rect.y = self.start_rect.y
+                
+                self.bx_pos -= (self.start_rect.x - (self.w/2))
+                self.by_pos -= (self.start_rect.y - (self.h/2)) 
+                self.generate = False
+                
+            elif lvlnum == 2:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[1], self.blocksize, self.blocksize)
+                self.player_rect.x = self.start_rect.x
+                self.player_rect.y = self.start_rect.y
+                
+                self.bx_pos -= (self.start_rect.x - (self.w/2))
+                self.by_pos -= (self.start_rect.y - (self.h/2)) 
+                self.generate = False
+                
+            elif lvlnum == 3:
+                pass
+            elif lvlnum == 4:
+                pass
+            elif lvlnum == 5:
+                pass
             
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
     def update(self):
+        self.map_generate(self.generate, self.lvlnum, self.lvls, self.blocksize)
+        # self.next_level(self.player_rect, self.start_rect)
         
         # Here I find the player location on the screen. (since the player is actually moving around on the background surface) 
         self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
@@ -66,19 +101,19 @@ class Game(Engine):
         # Here we scroll the map using the mouse pointer.
         if self.mouse_pos[0] >= (self.w - (self.w /8)):
             if (self.bx_pos + self.level_size[0])  >= self.w + self.blocksize:
-                if self.cp[0] > (self.w/50): 
+                if self.cp[0] > self.blocksize: 
                     self.bx_pos -= 50
         elif self.mouse_pos[0] <= (self.w /8):
-            if self.bx_pos  != 0:
-                if self.cp[0] < (self.w - (self.w/50)):
+            if self.bx_pos  < -self.blocksize:
+                if self.cp[0] < (self.w - self.blocksize):
                     self.bx_pos += 50
         elif self.mouse_pos[1] >= (self.h - (self.h /8)):
             if (self.by_pos + self.level_size[1])  >= self.h + self.blocksize:
-                if self.cp[1] > (self.h/50):
+                if self.cp[1] > self.blocksize:
                     self.by_pos -= 50
         elif self.mouse_pos[1] <= (self.h /8):
-            if (self.by_pos)  != 0:
-                if self.cp[1] < (self.h - (self.h/50)):
+            if (self.by_pos)  < -self.blocksize:
+                if self.cp[1] < (self.h - self.blocksize):
                     self.by_pos += 50 
     
     # The draw function. This is where things are actually drawn to screen.
@@ -93,6 +128,7 @@ class Game(Engine):
         for wall in self.walls:
             pygame.draw.rect(self.background, (self.coldgreyColor), wall)    
         pygame.draw.rect(self.background, (self.yellowColor), self.end_rect)
+        pygame.draw.rect(self.background, (200, 200, 255), self.start_rect)
         
         # Here we draw the player, and the player image to the background.
         pygame.draw.rect(self.background, (255, 255, 255,), self.player_rect, -1)
@@ -100,6 +136,7 @@ class Game(Engine):
         
         # Here we draw the mouse pointer image to the screen (NOT the background)
         self.screen.blit(self.mouse_image, self.mouse_pos)
+    
         
      
     # An event method giving us all key down presses.
