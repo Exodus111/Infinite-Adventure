@@ -9,7 +9,7 @@ To do:
     2. (Add wall collision) DONE
     3. (Add collision objects) DONE
     4. (Fix the damn playersprite) DONE
-    4.1 Make the world movable.
+    4.1 (Make the world movable) DONE
     5. (Load levels from files) DONE
     5.1 Make a player starting position in the level file.
     5.2 Make the exit block load the next level.
