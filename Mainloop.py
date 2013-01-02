@@ -11,7 +11,7 @@ import pygame, math, sys, os
 from pygame.locals import *
 
 # First we intialize pygame and set up a few class variables.
-class GameState(object):
+class Engine(object):
     def __init__(self, size=(640, 480), fill=(255, 255, 255)):   
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
@@ -85,6 +85,23 @@ class GameState(object):
                     rect.bottom = wall.top
                 if direction == "RIGHT":
                     rect.right = wall.left
+                    
+    # We are using two surfaces, one for the screen and one for the map (so I can scroll the game)
+        # So I needed a method to find the location of an object on the surface to screen.
+        # px, py are coords for the object on the surface, and mx, my are the coords for the surface location on the screen.
+    def find_player(self, px, py, mx, my):
+        
+        if mx >= 0:
+            player_x =  ((px - px) - mx) + px
+        elif mx < 0:
+            player_x = ((px - px) + mx) + px
+        if my >= 0:
+            player_y = ((py - py) - my) + py
+        elif my < 0:
+            player_y = ((py - py) + my) + py
+            
+        return (player_x, player_y)
+    
     
     def key_down(self, key):
         pass

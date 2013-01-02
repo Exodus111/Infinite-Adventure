@@ -12,12 +12,12 @@ from pygame.locals import *
 from Mainloop import *
 
 # This is the main class of the game, it inherits from the "engine" class, the __init__ method loads most of the game assets. 
-class Game(GameState):
+class Game(Engine):
     def __init__(self):
         # First I load my chosen screen size and use it to override the default one, while initializing the engine.
         self.w = 1240
         self.h = 960 
-        GameState.__init__(self, size=(self.w, self.h), fill=(255, 255, 255))
+        Engine.__init__(self, size=(self.w, self.h), fill=(255, 255, 255))
         
         # Some colors, these will change.
         self.brickColor = (156, 102, 31)
@@ -43,9 +43,10 @@ class Game(GameState):
         # Here I load up the player, and the variables necesary for movement and rotation.
         self.player_rect = pygame.Rect(132, 132, 38, 38)
         self.player_image = pygame.image.load("Arrow_cursor.png").convert_alpha()
-        self.player_moveUp, self.player_moveLeft, self.player_moveDown, self.player_moveRight = False, False, False, False
         self.player_rot = 90
+        self.player_move = [0,0,0,0]
         
+        self.player = Player(self.player_rect, self.player_rot, 15 )
         
             
         
@@ -56,22 +57,7 @@ class Game(GameState):
         self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
         
         # Movement for the player.
-        if self.player_moveUp == True:
-            if self.cp[1] > (self.h/50):    
-                self.player_rect.y -= 15
-                self.collision(self.walls, self.player_rect, "UP")
-        if self.player_moveLeft == True:
-            if self.cp[0] > (self.w/50):
-                self.player_rect.x -= 15
-                self.collision(self.walls, self.player_rect, "LEFT")
-        if self.player_moveDown == True:
-            if self.cp[1] < (self.h - (self.h/50)):
-                self.player_rect.y += 15
-                self.collision(self.walls, self.player_rect, "DOWN")
-        if self.player_moveRight == True:
-            if self.cp[0] < (self.w - (self.w/50)):
-                self.player_rect.x += 15
-                self.collision(self.walls, self.player_rect, "RIGHT")
+        self.player.player_move(self.player_move, self.cp, (self.w, self.h), self.player_rect, self.walls)
         
         # This method call ensures the player image does not deform under rotation
         # IMPORTANT: the player image MUST be a square (equal sides).
@@ -119,26 +105,26 @@ class Game(GameState):
     # An event method giving us all key down presses.
     def key_down(self, key):
         if key in (K_w, K_UP):
-            self.player_moveUp = True
+            self.player_move[0] = 1
         if key in (K_a, K_LEFT):
-            self.player_moveLeft = True
+            self.player_move[1] = 1
         if key in (K_s, K_DOWN):
-            self.player_moveDown = True
+            self.player_move[2] = 1
         if key in (K_d, K_RIGHT):
-            self.player_moveRight = True
+            self.player_move[3] = 1
         if key == K_ESCAPE:
             pygame.quit()
 
     # An event method giving us all key up presses. 
     def key_up(self, key):
         if key in (K_w, K_UP):
-            self.player_moveUp = False
+            self.player_move[0] = 0
         if key in (K_a, K_LEFT):
-            self.player_moveLeft = False
+            self.player_move[1] = 0
         if key in (K_s, K_DOWN):
-            self.player_moveDown = False
+            self.player_move[2] = 0
         if key in (K_d, K_RIGHT):
-            self.player_moveRight = False
+            self.player_move[3] = 0
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
     def mouse_down(self, button, pos):
@@ -154,6 +140,43 @@ class Game(GameState):
         # Here we call the method to rotate the mouse.
         self.player_rot = self.rotate((self.cp[0], self.cp[1]), self.mouse_pos)
              
+    
+class Player(Engine):
+    
+    # Here I load up the player, and the variables necesary for movement and rotation.
+    def __init__(self, rect, rot, speed ):
+        self.player_rect = rect
+        self.player_rot = rot
+        self.player_speed = speed
+    
+    def player_move(self, dir, screenpos, screensize, player_rect, walls):
+        if dir[0] == 1:
+            if screenpos[1] > (screensize[1]/50):    
+                player_rect.y -= self.player_speed
+                self.collision(walls, player_rect, "UP")
+        if dir[1] == 1:
+            if screenpos[0] > (screensize[0]/50):
+                player_rect.x -= self.player_speed
+                self.collision(walls, player_rect, "LEFT")
+        if dir[2] == 1:
+            if screenpos[1] < (screensize[1] - (screensize[1]/50)):
+                player_rect.y += self.player_speed
+                self.collision(walls, player_rect, "DOWN")
+        if dir[3] == 1:
+            if screenpos[0] < (screensize[0] - (screensize[0]/50)):
+                player_rect.x += self.player_speed
+                self.collision(walls, player_rect, "RIGHT")
+    
+class Levels(Engine):
+    def __init__(self):
+        pass
+    
+    def select(self):
+        pass
+    
+    def generate(self):
+        pass
+    
     
 
             
