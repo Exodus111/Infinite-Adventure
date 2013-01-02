@@ -33,7 +33,8 @@ class Game(GameState):
         # Then I load the first lvl from the external file.
         # And call the map creation method from the engine.
         level1 = [line.strip() for line in open('level_1.txt')]
-        self.walls, self.end_rect, self.space = self.draw_map(level1, 44, 44)
+        self.blocksize = 44
+        self.walls, self.end_rect, self.space = self.draw_map(level1, self.blocksize, self.blocksize)
         
         # Here we quickly set up an image file for the mouse cursor (making sure to convert it and keep transparency)
         self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
@@ -46,21 +47,6 @@ class Game(GameState):
         self.player_rot = 90
         
         
-        # Im are using two surfaces, one for the screen and one for the map (so I can scroll the game)
-        # So I needed a method to find the location of an object on the surface to screen.
-        # px, py are coords for the object on the surface, and mx, my are the coords for the surface location on the screen.
-    def find_player(self, px, py, mx, my):
-        
-        if mx >= 0:
-            player_x =  ((px - px) - mx) + px
-        elif mx < 0:
-            player_x = ((px - px) + mx) + px
-        if my >= 0:
-            player_y = ((py - py) - my) + py
-        elif my < 0:
-            player_y = ((py - py) + my) + py
-            
-        return (player_x, player_y)
             
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
@@ -71,17 +57,21 @@ class Game(GameState):
         
         # Movement for the player.
         if self.player_moveUp == True:
-            self.player_rect.y -= 15
-            self.collision(self.walls, self.player_rect, "UP")
+            if self.cp[1] > (self.h/50):    
+                self.player_rect.y -= 15
+                self.collision(self.walls, self.player_rect, "UP")
         if self.player_moveLeft == True:
-            self.player_rect.x -= 15
-            self.collision(self.walls, self.player_rect, "LEFT")
+            if self.cp[0] > (self.w/50):
+                self.player_rect.x -= 15
+                self.collision(self.walls, self.player_rect, "LEFT")
         if self.player_moveDown == True:
-            self.player_rect.y += 15
-            self.collision(self.walls, self.player_rect, "DOWN")
+            if self.cp[1] < (self.h - (self.h/50)):
+                self.player_rect.y += 15
+                self.collision(self.walls, self.player_rect, "DOWN")
         if self.player_moveRight == True:
-            self.player_rect.x += 15
-            self.collision(self.walls, self.player_rect, "RIGHT")
+            if self.cp[0] < (self.w - (self.w/50)):
+                self.player_rect.x += 15
+                self.collision(self.walls, self.player_rect, "RIGHT")
         
         # This method call ensures the player image does not deform under rotation
         # IMPORTANT: the player image MUST be a square (equal sides).
@@ -89,17 +79,21 @@ class Game(GameState):
         
         # Here we scroll the map using the mouse pointer.
         if self.mouse_pos[0] >= (self.w - (self.w /8)):
-            if (self.bx_pos + self.level_size[0])  != self.w:
-                self.bx_pos = self.bx_pos - 50
+            if (self.bx_pos + self.level_size[0])  >= self.w + self.blocksize:
+                if self.cp[0] > (self.w/50): 
+                    self.bx_pos -= 50
         elif self.mouse_pos[0] <= (self.w /8):
             if self.bx_pos  != 0:
-                self.bx_pos = self.bx_pos + 50
+                if self.cp[0] < (self.w - (self.w/50)):
+                    self.bx_pos += 50
         elif self.mouse_pos[1] >= (self.h - (self.h /8)):
-            if (self.by_pos + self.level_size[1])  != self.h:
-                self.by_pos = self.by_pos - 50
-        elif self.mouse_pos[1] <= (self.w /8):
+            if (self.by_pos + self.level_size[1])  >= self.h + self.blocksize:
+                if self.cp[1] > (self.h/50):
+                    self.by_pos -= 50
+        elif self.mouse_pos[1] <= (self.h /8):
             if (self.by_pos)  != 0:
-                self.by_pos = self.by_pos + 50 
+                if self.cp[1] < (self.h - (self.h/50)):
+                    self.by_pos += 50 
     
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.            
