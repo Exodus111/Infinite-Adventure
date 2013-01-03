@@ -34,10 +34,13 @@ class Game(Engine):
         # And call the map creation method from the engine.
         level1 = [line.strip() for line in open('level_1.txt')]
         level2 = [line.strip() for line in open('level_2.txt')]
+        level3 = [line.strip() for line in open('level_3.txt')]
+        level4 = [line.strip() for line in open('level_4.txt')]
+        level5 = [line.strip() for line in open('level_5.txt')]
         self.blocksize = 64
         self.generate = True
         self.lvlnum = 1
-        self.lvls = [level1, level2]
+        self.lvls = [level1, level2, level3, level4, level5]
         # Here we quickly set up an image file for the mouse cursor (making sure to convert it and keep transparency)
         self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
         self.mouse_pos = (0, 0)
@@ -51,9 +54,10 @@ class Game(Engine):
         self.player = Player(self.player_rect, self.player_rot, 15 )
         
     def next_level(self, playerrect, endzonerect):
-        if playerrect.colliderect(endzonerect):
-            self.lvlnum = 2
-            self.generate = True
+        if self.generate == False:
+            if playerrect.colliderect(endzonerect) == True:
+                self.lvlnum += 1 
+                self.generate = True
     
     def map_generate(self, generate, lvlnum, lvlfile, blocksize):
         if generate == True:
@@ -62,8 +66,8 @@ class Game(Engine):
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
-                self.bx_pos -= (self.start_rect.x - (self.w/2))
-                self.by_pos -= (self.start_rect.y - (self.h/2)) 
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
                 self.generate = False
                 
             elif lvlnum == 2:
@@ -71,22 +75,42 @@ class Game(Engine):
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
-                self.bx_pos -= (self.start_rect.x - (self.w/2))
-                self.by_pos -= (self.start_rect.y - (self.h/2)) 
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
                 self.generate = False
                 
             elif lvlnum == 3:
-                pass
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[2], self.blocksize, self.blocksize)
+                self.player_rect.x = self.start_rect.x
+                self.player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
+                
             elif lvlnum == 4:
-                pass
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[3], self.blocksize, self.blocksize)
+                self.player_rect.x = self.start_rect.x
+                self.player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
+                
             elif lvlnum == 5:
-                pass
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[4], self.blocksize, self.blocksize)
+                self.player_rect.x = self.start_rect.x
+                self.player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
             
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
     def update(self):
         self.map_generate(self.generate, self.lvlnum, self.lvls, self.blocksize)
-        # self.next_level(self.player_rect, self.start_rect)
+        self.next_level(self.player_rect, self.end_rect)
         
         # Here I find the player location on the screen. (since the player is actually moving around on the background surface) 
         self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
