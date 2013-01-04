@@ -26,7 +26,7 @@ class Game(Engine):
         
         # Setting up some class variables for the game map, (background surface).
         self.level_size = (3200, 3200)
-        self.background = pygame.Surface(self.level_size)
+        self.background = pygame.Surface(self.level_size).convert()
         self.bx_pos, self.by_pos = (0,0)
         self.cp = (0,0)
         self.background.fill(self.brickColor)      
@@ -116,8 +116,8 @@ class Game(Engine):
         self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
         
         # Movement for the player.
-        self.player.player_move(self.player_move, self.cp, (self.w, self.h), self.player_rect, self.walls)
-        
+        self.player.player_move(self.player_move, self.cp, (self.w, self.h), self.walls)
+
         # This method call ensures the player image does not deform under rotation
         # IMPORTANT: the player image MUST be a square (equal sides).
         self.playerimg = self.rotate_image(self.player_image, (self.player_rot + 90))
@@ -186,6 +186,7 @@ class Game(Engine):
             self.player_move[2] = 0
         if key in (K_d, K_RIGHT):
             self.player_move[3] = 0
+    
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
     def mouse_down(self, button, pos):
@@ -210,7 +211,9 @@ class Player(Engine):
         self.player_rot = rot
         self.player_speed = speed
     
-    def player_move(self, dir, screenpos, screensize, player_rect, walls):
+    
+    def player_move(self, dir, screenpos, screensize, walls):
+        player_rect = self.player_rect
         if dir[0] == 1:
             if screenpos[1] > (screensize[1]/50):    
                 player_rect.y -= self.player_speed
@@ -227,16 +230,7 @@ class Player(Engine):
             if screenpos[0] < (screensize[0] - (screensize[0]/50)):
                 player_rect.x += self.player_speed
                 self.collision(walls, player_rect, "RIGHT")
-    
-class Levels(Engine):
-    def __init__(self):
-        pass
-    
-    def select(self):
-        pass
-    
-    def generate(self):
-        pass
+
     
     
 
