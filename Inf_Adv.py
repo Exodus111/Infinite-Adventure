@@ -20,8 +20,8 @@ class Game(Engine):
         Engine.__init__(self, size=(self.w, self.h), fill=(255, 255, 255))
         
         # Some colors, these will change.
-        self.brickColor = (156, 102, 31)
-        self.coldgreyColor = (128, 138, 135)
+        self.blackColor = (0, 0, 0)
+        self.sgidarkgray = (85, 85, 85)
         self.yellowColor = (255, 255, 0)
         
         # Setting up some class variables for the game map, (background surface).
@@ -29,7 +29,7 @@ class Game(Engine):
         self.background = pygame.Surface(self.level_size).convert()
         self.bx_pos, self.by_pos = (0,0)
         self.cp = (0,0)
-        self.background.fill(self.brickColor)      
+        self.background.fill(self.blackColor)      
         # Then I load the first lvl from the external file.
         # And call the map creation method from the engine.
         level1 = [line.strip() for line in open('level_1.txt')]
@@ -53,6 +53,10 @@ class Game(Engine):
         
         self.player = Player(self.player_rect, self.player_rot, 15 )
         
+        npcrect = pygame.Rect(500, 200, 32, 32)
+        npcimage = pygame.image.load("Greendot.png").convert_alpha()
+        self.npc1 = NPC(npcimage, npcrect, 10)
+        
     def next_level(self, playerrect, endzonerect):
         if self.generate == False:
             if playerrect.colliderect(endzonerect) == True:
@@ -62,7 +66,7 @@ class Game(Engine):
     def map_generate(self, generate, lvlnum, lvlfile, blocksize):
         if generate == True:
             if lvlnum == 1:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[0], self.blocksize, self.blocksize)
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[0], blocksize, blocksize)
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
@@ -71,7 +75,7 @@ class Game(Engine):
                 self.generate = False
                 
             elif lvlnum == 2:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[1], self.blocksize, self.blocksize)
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[1], blocksize, blocksize)
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
@@ -80,7 +84,7 @@ class Game(Engine):
                 self.generate = False
                 
             elif lvlnum == 3:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[2], self.blocksize, self.blocksize)
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[2], blocksize, blocksize)
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
@@ -89,7 +93,7 @@ class Game(Engine):
                 self.generate = False
                 
             elif lvlnum == 4:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[3], self.blocksize, self.blocksize)
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[3], blocksize, blocksize)
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
@@ -98,7 +102,7 @@ class Game(Engine):
                 self.generate = False
                 
             elif lvlnum == 5:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[4], self.blocksize, self.blocksize)
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[4], blocksize, blocksize)
                 self.player_rect.x = self.start_rect.x
                 self.player_rect.y = self.start_rect.y
                 
@@ -140,6 +144,8 @@ class Game(Engine):
                 if self.cp[1] < (self.h - self.blocksize):
                     self.by_pos += 50 
     
+        self.npc1.npc_move(self.player_rect, self.walls)
+    
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.            
     def draw(self):
@@ -148,12 +154,14 @@ class Game(Engine):
         
         # Here we draw the map onto the background surface.
         for floor in self.space:
-            pygame.draw.rect(self.background, (self.brickColor), floor)
+            pygame.draw.rect(self.background, (self.blackColor), floor)
         for wall in self.walls:
-            pygame.draw.rect(self.background, (self.coldgreyColor), wall)    
+            pygame.draw.rect(self.background, (self.sgidarkgray), wall)    
         pygame.draw.rect(self.background, (self.yellowColor), self.end_rect)
         pygame.draw.rect(self.background, (200, 200, 255), self.start_rect)
         
+        
+        self.background.blit(self.npc1.image, (self.npc1.rect.x, self.npc1.rect.y))
         # Here we draw the player, and the player image to the background.
         pygame.draw.rect(self.background, (255, 255, 255,), self.player_rect, -1)
         self.background.blit(self.playerimg, ((self.player_rect.x -3), (self.player_rect.y -3)))
@@ -205,7 +213,7 @@ class Game(Engine):
     
 class Player(Engine):
     
-    # Here I load up the player, and the variables necesary for movement and rotation.
+    # Here I load up the player, and the variables necessary for movement and rotation.
     def __init__(self, rect, rot, speed ):
         self.player_rect = rect
         self.player_rot = rot
@@ -230,7 +238,52 @@ class Player(Engine):
             if screenpos[0] < (screensize[0] - (screensize[0]/50)):
                 player_rect.x += self.player_speed
                 self.collision(walls, player_rect, "RIGHT")
+                
+                
 
+class NPC(Engine):
+    def __init__(self, image, rect, speed):
+        self.image = image
+        self.rect = rect
+        self.speed = speed
+        self.npcmove = [0, 0, 0, 0]
+        
+    def npc_move(self, target, walls):
+        if self.rect.x + 500 > target.x:
+            if self.rect.x - 500 < target.x:
+                if self.rect.y + 500 > target.y:
+                    if self.rect.y - 500 < target.y:
+                        if self.rect.y > target.y:
+                            self.npcmove[0] = 1 #UP
+                            self.npcmove[2] = 0
+                        elif self.rect.y < target.y:
+                            self.npcmove[2] = 1 #DOWN
+                            self.npcmove[0] = 0
+                        if self.rect.x > target.x:
+                            self.npcmove[1] = 1 #LEFT
+                            self.npcmove[3] = 0
+                        elif self.rect.x < target.x:
+                            self.npcmove[3] = 1 #RIGHT
+                            self.npcmove[1] = 0
+                        self.movement(walls)
+                        
+    def movement(self, walls):
+        if self.npcmove[0] == 1:
+            self.rect.y -= self.speed
+            self.collision(walls, self.rect, "UP")
+        if self.npcmove[1] == 1:
+            self.rect.x -= self.speed
+            self.collision(walls, self.rect, "LEFT")
+        if self.npcmove[2] == 1:
+            self.rect.y += self.speed
+            self.collision(walls, self.rect, "DOWN")
+        if self.npcmove[3] == 1:
+            self.rect.x += self.speed
+            self.collision(walls, self.rect, "RIGHT")
+                            
+                                 
+        
+        
     
     
 
