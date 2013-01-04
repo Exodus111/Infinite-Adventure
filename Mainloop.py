@@ -103,6 +103,29 @@ class Engine(object):
         return (player_x, player_y)
     
     
+    def draw_map(self, map, w, h):
+        walls = []
+        space = []   
+        x = -w
+        y = 0
+        for row in map:
+            for col in row:
+                if col == "W":
+                    thatwall = pygame.Rect(x, y, w, h)
+                    walls.append(thatwall)
+                elif col == ".":
+                    thatspace = pygame.Rect(x, y, w, h)
+                    space.append(thatspace)
+                elif col == "E":
+                    end_rect = pygame.Rect(x, y, w, h)
+                elif col == "S":
+                    start_rect = pygame.Rect(x, y, w, h)
+                x += w
+            y += h
+            x = -w
+        
+        return walls, end_rect, space, start_rect 
+    
     def key_down(self, key):
         pass
     
@@ -118,26 +141,7 @@ class Engine(object):
     def mouse_motion(self, buttons, pos, rel):
         pass
              
-    def draw_map(self, map, w, h):
-        walls = []
-        space = []   
-        x = -w
-        y = 0
-        for row in map:
-            for col in row:
-                if col == "W":
-                    thatwall = pygame.Rect(x, y, w, h)
-                    walls.append(thatwall)
-                elif col == "S":
-                    thatspace = pygame.Rect(x, y, w, h)
-                    space.append(thatspace)
-                elif col == "E":
-                    end_rect = pygame.Rect(x, y, w, h)
-                x += w
-            y += h
-            x = -w
-        
-        return walls, end_rect, space 
+   
     
         
             
