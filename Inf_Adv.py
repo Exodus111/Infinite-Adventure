@@ -47,7 +47,7 @@ class Game(Engine):
         self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
         self.mouse_pos = (0, 0)
         
-        # Here I load up the player, and the variables necesary for movement and rotation.
+        # Here I load up the player, and the variables necessary for movement and rotation.
         self.player_rect = pygame.Rect(132, 132, 38, 38)
         self.player_image = pygame.image.load("Arrow_cursor.png").convert_alpha()
         self.player_rot = 90
