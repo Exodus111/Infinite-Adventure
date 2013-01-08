@@ -72,6 +72,25 @@ class Engine(object):
     def draw(self): 
         pass
     
+    
+    def player_move(self, dir, screenpos, screensize, walls, player_rect, player_speed):
+        if dir[0] == 1:
+            if screenpos[1] > (screensize[1]/50):    
+                player_rect.y -= player_speed
+                self.collision(walls, player_rect, "UP")
+        if dir[1] == 1:
+            if screenpos[0] > (screensize[0]/50):
+                player_rect.x -= player_speed
+                self.collision(walls, player_rect, "LEFT")
+        if dir[2] == 1:
+            if screenpos[1] < (screensize[1] - (screensize[1]/50)):
+                player_rect.y += player_speed
+                self.collision(walls, player_rect, "DOWN")
+        if dir[3] == 1:
+            if screenpos[0] < (screensize[0] - (screensize[0]/50)):
+                player_rect.x += player_speed
+                self.collision(walls, player_rect, "RIGHT")
+    
 # Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
 # the rect object to check and a string for collision.
     def collision(self, walls, rect, direction):
@@ -101,6 +120,96 @@ class Engine(object):
             player_y = ((py - py) + my) + py
             
         return (player_x, player_y)
+    
+    def npc_track(self, target, walls, npcmove, rect, speed):
+        if rect.x + 500 > target.x:
+            if rect.x - 500 < target.x:
+                if rect.y + 500 > target.y:
+                    if rect.y - 500 < target.y:
+                        if rect.y > target.y:
+                            npcmove[0] = 1 #UP
+                            npcmove[2] = 0
+                        elif rect.y < target.y:
+                            npcmove[2] = 1 #DOWN
+                            npcmove[0] = 0
+                        if rect.x > target.x:
+                            npcmove[1] = 1 #LEFT
+                            npcmove[3] = 0
+                        elif rect.x < target.x:
+                            npcmove[3] = 1 #RIGHT
+                            npcmove[1] = 0
+                        self.npc_movement(walls, npcmove, rect, speed)
+                        
+    def npc_movement(self, walls, npcmove, rect, speed):
+        if npcmove[0] == 1:
+            rect.y -= speed
+            self.collision(walls, rect, "UP")
+        if npcmove[1] == 1:
+            rect.x -= speed
+            self.collision(walls, rect, "LEFT")
+        if npcmove[2] == 1:
+            rect.y += speed
+            self.collision(walls, rect, "DOWN")
+        if npcmove[3] == 1:
+            rect.x += speed
+            self.collision(walls, rect, "RIGHT")
+    
+    
+    def next_level(self, playerrect, endzonerect):
+        if playerrect.colliderect(endzonerect) == True:
+            self.lvlnum += 1 
+            self.generate = True
+    
+    def map_generate(self, lvlnum, lvlfile, blocksize, player_rect):
+        if self.generate == True:
+            if lvlnum == 1:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[0], blocksize, blocksize)
+                player_rect.x = self.start_rect.x
+                player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
+                
+                
+            elif lvlnum == 2:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[1], blocksize, blocksize)
+                player_rect.x = self.start_rect.x
+                player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
+                
+                
+            elif lvlnum == 3:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[2], blocksize, blocksize)
+                player_rect.x = self.start_rect.x
+                player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
+               
+                
+            elif lvlnum == 4:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[3], blocksize, blocksize)
+                player_rect.x = self.start_rect.x
+                player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
+                
+                
+            elif lvlnum == 5:
+                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[4], blocksize, blocksize)
+                player_rect.x = self.start_rect.x
+                player_rect.y = self.start_rect.y
+                
+                self.bx_pos = - self.start_rect.x + (self.w/2)
+                self.by_pos = - self.start_rect.y + (self.h/2)
+                self.generate = False
     
     
     def draw_map(self, map, w, h):

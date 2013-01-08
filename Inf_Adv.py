@@ -23,6 +23,8 @@ class Game(Engine):
         self.blackColor = (0, 0, 0)
         self.sgidarkgray = (85, 85, 85)
         self.yellowColor = (255, 255, 0)
+        self.wood = pygame.image.load("wood.jpg").convert()
+        self.stone = pygame.image.load("stone.jpg").convert()
         
         # Setting up some class variables for the game map, (background surface).
         self.level_size = (3200, 3200)
@@ -49,7 +51,7 @@ class Game(Engine):
         self.player_rect = pygame.Rect(132, 132, 38, 38)
         self.player_image = pygame.image.load("Arrow_cursor.png").convert_alpha()
         self.player_rot = 90
-        self.player_move = [0,0,0,0]
+        self.player_dir = [0,0,0,0]
         
         self.player = Player(self.player_rect, self.player_rot, 15 )
         
@@ -57,74 +59,21 @@ class Game(Engine):
         npcimage = pygame.image.load("Greendot.png").convert_alpha()
         self.npc1 = NPC(npcimage, npcrect, 10)
         
-    def next_level(self, playerrect, endzonerect):
-        if self.generate == False:
-            if playerrect.colliderect(endzonerect) == True:
-                self.lvlnum += 1 
-                self.generate = True
-    
-    def map_generate(self, generate, lvlnum, lvlfile, blocksize):
-        if generate == True:
-            if lvlnum == 1:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[0], blocksize, blocksize)
-                self.player_rect.x = self.start_rect.x
-                self.player_rect.y = self.start_rect.y
-                
-                self.bx_pos = - self.start_rect.x + (self.w/2)
-                self.by_pos = - self.start_rect.y + (self.h/2)
-                self.generate = False
-                
-            elif lvlnum == 2:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[1], blocksize, blocksize)
-                self.player_rect.x = self.start_rect.x
-                self.player_rect.y = self.start_rect.y
-                
-                self.bx_pos = - self.start_rect.x + (self.w/2)
-                self.by_pos = - self.start_rect.y + (self.h/2)
-                self.generate = False
-                
-            elif lvlnum == 3:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[2], blocksize, blocksize)
-                self.player_rect.x = self.start_rect.x
-                self.player_rect.y = self.start_rect.y
-                
-                self.bx_pos = - self.start_rect.x + (self.w/2)
-                self.by_pos = - self.start_rect.y + (self.h/2)
-                self.generate = False
-                
-            elif lvlnum == 4:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[3], blocksize, blocksize)
-                self.player_rect.x = self.start_rect.x
-                self.player_rect.y = self.start_rect.y
-                
-                self.bx_pos = - self.start_rect.x + (self.w/2)
-                self.by_pos = - self.start_rect.y + (self.h/2)
-                self.generate = False
-                
-            elif lvlnum == 5:
-                self.walls, self.end_rect, self.space, self.start_rect = self.draw_map(lvlfile[4], blocksize, blocksize)
-                self.player_rect.x = self.start_rect.x
-                self.player_rect.y = self.start_rect.y
-                
-                self.bx_pos = - self.start_rect.x + (self.w/2)
-                self.by_pos = - self.start_rect.y + (self.h/2)
-                self.generate = False
-            
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
     def update(self):
-        self.map_generate(self.generate, self.lvlnum, self.lvls, self.blocksize)
+        self.map_generate(self.lvlnum, self.lvls, self.blocksize, self.player_rect)
         self.next_level(self.player_rect, self.end_rect)
         
         # Here I find the player location on the screen. (since the player is actually moving around on the background surface) 
         self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
         
         # Movement for the player.
-        self.player.player_move(self.player_move, self.cp, (self.w, self.h), self.walls)
+        self.player_move(self.player_dir, self.cp, (self.w, self.h), self.walls, self.player.player_rect, self.player.player_speed)
 
         # This method call ensures the player image does not deform under rotation
         # IMPORTANT: the player image MUST be a square (equal sides).
-        self.playerimg = self.rotate_image(self.player_image, (self.player_rot + 90))
+        self.playerimg = self.rotate_image(self.player_image, (self.player_rot))
         
         # Here we scroll the map using the mouse pointer.
         if self.mouse_pos[0] >= (self.w - (self.w /8)):
@@ -144,7 +93,7 @@ class Game(Engine):
                 if self.cp[1] < (self.h - self.blocksize):
                     self.by_pos += 50 
     
-        self.npc1.npc_move(self.player_rect, self.walls)
+        self.npc_track(self.player_rect, self.walls, self.npc1.npcmove, self.npc1.rect, self.npc1.speed)
     
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.            
@@ -155,8 +104,10 @@ class Game(Engine):
         # Here we draw the map onto the background surface.
         for floor in self.space:
             pygame.draw.rect(self.background, (self.blackColor), floor)
+            self.background.blit(self.wood, (floor.x, floor.y))
         for wall in self.walls:
-            pygame.draw.rect(self.background, (self.sgidarkgray), wall)    
+            pygame.draw.rect(self.background, (self.sgidarkgray), wall)                   
+            self.background.blit(self.stone, (wall.x, wall.y))   
         pygame.draw.rect(self.background, (self.yellowColor), self.end_rect)
         pygame.draw.rect(self.background, (200, 200, 255), self.start_rect)
         
@@ -174,26 +125,26 @@ class Game(Engine):
     # An event method giving us all key down presses.
     def key_down(self, key):
         if key in (K_w, K_UP):
-            self.player_move[0] = 1
+            self.player_dir[0] = 1
         if key in (K_a, K_LEFT):
-            self.player_move[1] = 1
+            self.player_dir[1] = 1
         if key in (K_s, K_DOWN):
-            self.player_move[2] = 1
+            self.player_dir[2] = 1
         if key in (K_d, K_RIGHT):
-            self.player_move[3] = 1
+            self.player_dir[3] = 1
         if key == K_ESCAPE:
             pygame.quit()
 
     # An event method giving us all key up presses. 
     def key_up(self, key):
         if key in (K_w, K_UP):
-            self.player_move[0] = 0
+            self.player_dir[0] = 0
         if key in (K_a, K_LEFT):
-            self.player_move[1] = 0
+            self.player_dir[1] = 0
         if key in (K_s, K_DOWN):
-            self.player_move[2] = 0
+            self.player_dir[2] = 0
         if key in (K_d, K_RIGHT):
-            self.player_move[3] = 0
+            self.player_dir[3] = 0
     
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
@@ -211,33 +162,12 @@ class Game(Engine):
         self.player_rot = self.rotate((self.cp[0], self.cp[1]), self.mouse_pos)
              
     
-class Player(Engine):
-    
+class Player(Engine):  
     # Here I load up the player, and the variables necessary for movement and rotation.
     def __init__(self, rect, rot, speed ):
         self.player_rect = rect
         self.player_rot = rot
         self.player_speed = speed
-    
-    
-    def player_move(self, dir, screenpos, screensize, walls):
-        player_rect = self.player_rect
-        if dir[0] == 1:
-            if screenpos[1] > (screensize[1]/50):    
-                player_rect.y -= self.player_speed
-                self.collision(walls, player_rect, "UP")
-        if dir[1] == 1:
-            if screenpos[0] > (screensize[0]/50):
-                player_rect.x -= self.player_speed
-                self.collision(walls, player_rect, "LEFT")
-        if dir[2] == 1:
-            if screenpos[1] < (screensize[1] - (screensize[1]/50)):
-                player_rect.y += self.player_speed
-                self.collision(walls, player_rect, "DOWN")
-        if dir[3] == 1:
-            if screenpos[0] < (screensize[0] - (screensize[0]/50)):
-                player_rect.x += self.player_speed
-                self.collision(walls, player_rect, "RIGHT")
                 
                 
 
@@ -248,38 +178,6 @@ class NPC(Engine):
         self.speed = speed
         self.npcmove = [0, 0, 0, 0]
         
-    def npc_move(self, target, walls):
-        if self.rect.x + 500 > target.x:
-            if self.rect.x - 500 < target.x:
-                if self.rect.y + 500 > target.y:
-                    if self.rect.y - 500 < target.y:
-                        if self.rect.y > target.y:
-                            self.npcmove[0] = 1 #UP
-                            self.npcmove[2] = 0
-                        elif self.rect.y < target.y:
-                            self.npcmove[2] = 1 #DOWN
-                            self.npcmove[0] = 0
-                        if self.rect.x > target.x:
-                            self.npcmove[1] = 1 #LEFT
-                            self.npcmove[3] = 0
-                        elif self.rect.x < target.x:
-                            self.npcmove[3] = 1 #RIGHT
-                            self.npcmove[1] = 0
-                        self.movement(walls)
-                        
-    def movement(self, walls):
-        if self.npcmove[0] == 1:
-            self.rect.y -= self.speed
-            self.collision(walls, self.rect, "UP")
-        if self.npcmove[1] == 1:
-            self.rect.x -= self.speed
-            self.collision(walls, self.rect, "LEFT")
-        if self.npcmove[2] == 1:
-            self.rect.y += self.speed
-            self.collision(walls, self.rect, "DOWN")
-        if self.npcmove[3] == 1:
-            self.rect.x += self.speed
-            self.collision(walls, self.rect, "RIGHT")
                             
                                  
         
