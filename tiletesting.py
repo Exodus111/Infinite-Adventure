@@ -2,10 +2,16 @@
 Created on Jan 8, 2013
 
 @author: aurelio
+
+This is a testfile to try out auto generated maps in the game Infinite Adventures.
+There is some procedural work here, but for the most part this a very simple approach.
+Move with W'A'S'D
+
 '''
 import pygame, sys, os, random
 from pygame.locals import *
 
+# This is the main class that runs the code gameloop and contains all the Definitions.
 class main():
     def __init__(self):
         pygame.init()
@@ -20,14 +26,15 @@ class main():
         
         clock = pygame.time.Clock()
         
-        blocksize = 64
+        blocksize = 64 # This is important as it sets the base blocks all the maps are based on.
         size = 2
         
-        player = Player(screen)
+        player = Player(screen) # I added a playersprite, but it does nothing.
         
-        roomTiles, wallTiles = self.generate_room(blocksize)
-        list = [wallTiles, roomTiles]
-        allsprites = pygame.sprite.LayeredDirty((list, player))
+        
+        roomTiles, wallTiles = self.generate_room(blocksize) # This generates the map into two lists of sprites.
+        list = [wallTiles, roomTiles] # Here I put both lists into another, the position is important, as the second placement will override the first.
+        allsprites = pygame.sprite.LayeredDirty((list, player)) # Here I add the list to a DirtySprite class (does nothing atm)
 
         while True:
             clock.tick(60)
@@ -46,12 +53,12 @@ class main():
                         kx -= 50 
             
             allsprites.update()
-            allsprites.draw(background)
+            allsprites.draw(background)   # Here we draw the map onto the background surface.
             screen.blit(background, (kx,ky))
             pygame.display.update()
             allsprites.clear(screen, background)
             
-    def direction(self, rect, rooms, block, run):
+    def direction(self, rect, rooms, block, run):  #This methods checks each direction to see if there is space for another room there.
         size = self.background.get_size()
         print size[0]
         print size [1]
@@ -92,6 +99,7 @@ class main():
                     dir[3] = 1
             
         print dir
+        # Them we add the required distance to the X/Y coords. (we still need the size of the next Rect for left and up)
         if dir[0] == 1: # moving right
             x = (rect.x + rect.width + (block*2))
             y = rect.y
@@ -115,7 +123,8 @@ class main():
         
         return x, y, dir, run
                       
-    def room_checker(self, rect, rooms, block, dir):
+                    
+    def room_checker(self, rect, rooms, block, dir): # This method checks if there are any previous rectangles in the way in any direciton.
         right = left = up = down = True
         for i in rooms:
             if dir == "right":
@@ -145,7 +154,7 @@ class main():
             
 
                             
-    # Generates a room rectangle of random size.        
+    # Generates a room rectangle of random size, and ties the other rects together.        
     def generate_room(self, block):
         run = True
         x = block
@@ -191,7 +200,7 @@ class main():
             walls.append(wall_tiles)
         return rooms, walls
     
-    # Takes a room rectangle and adds floor tiles and wall tiles as sprites
+    # Here we make the rooms with floor tiles and wall tiles.
     def sprite_map(self, rect, block):
         surf = rect
         row = ((surf.right - surf.left) / block)
@@ -231,7 +240,7 @@ class main():
     
     
                     
-class Player(pygame.sprite.DirtySprite):
+class Player(pygame.sprite.DirtySprite): # The player sprite (doesnt really do anything)
     def __init__(self, screen):
         pygame.sprite.DirtySprite.__init__(self)
         self.image = pygame.image.load("Arrow_cursor.png").convert_alpha()
@@ -241,7 +250,7 @@ class Player(pygame.sprite.DirtySprite):
         
         
 
-class Tile(pygame.sprite.DirtySprite):
+class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
     def __init__(self, surf, blocksize, select):
         pygame.sprite.DirtySprite.__init__(self)
         self.tile_select(blocksize, select)
@@ -259,6 +268,6 @@ class Tile(pygame.sprite.DirtySprite):
             self.image = pygame.image.load("blacktile.jpg").convert()
             self.rect = self.image.get_rect()
         
-if __name__ == '__main__':
+if __name__ == '__main__': # To run.
     main()    
             
