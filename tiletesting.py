@@ -2,11 +2,9 @@
 Created on Jan 8, 2013
 
 @author: aurelio
-
 This is a testfile to try out auto generated maps in the game Infinite Adventures.
 There is some procedural work here, but for the most part this a very simple approach.
 Move with W'A'S'D
-
 '''
 import pygame, sys, os, random
 from pygame.locals import *
@@ -26,16 +24,15 @@ class main():
         
         clock = pygame.time.Clock()
         
-        blocksize = 64 # This is important as it sets the base blocks all the maps are based on.
+        blocksize = 32 # This is important as it sets the base blocks all the maps are based on.
         size = 2
         
         player = Player(screen) # I added a playersprite, but it does nothing.
         
-        
-        roomTiles, wallTiles = self.generate_room(blocksize) # This generates the map into two lists of sprites.
+        roomTiles, wallTiles = self.generate_room(blocksize)# This generates the map into two lists of sprites.
         list = [wallTiles, roomTiles] # Here I put both lists into another, the position is important, as the second placement will override the first.
         allsprites = pygame.sprite.LayeredDirty((list, player)) # Here I add the list to a DirtySprite class (does nothing atm)
-
+        
         while True:
             clock.tick(60)
             
@@ -53,18 +50,18 @@ class main():
                         kx -= 50 
             
             allsprites.update()
-            allsprites.draw(background)   # Here we draw the map onto the background surface.
+            allsprites.draw(background) # Here we draw the map onto the background surface.
             screen.blit(background, (kx,ky))
             pygame.display.update()
             allsprites.clear(screen, background)
             
-    def direction(self, rect, rooms, block, run):  #This methods checks each direction to see if there is space for another room there.
+    def direction(self, rect, rooms, block, run): #This methods checks each direction to see if there is space for another room there.
         size = self.background.get_size()
         print size[0]
         print size [1]
         dir = [1, 1, 1, 1]
         if rooms != []:
-            if rect.centerx + (block*18) > size[0]: #checking right
+            if rect.centerx + (block*40) > size[0]: #checking right
                 dir[0] = 0 
             else: 
                 r, l, u, d = self.room_checker(rect, rooms, block, "right")
@@ -72,7 +69,7 @@ class main():
                     dir[0] = 0    
                 else:
                     dir[0] = 1
-            if rect.centerx - (block*18) < (size[0] - size[0]): #checking left
+            if rect.centerx - (block*40) < (size[0] - size[0]): #checking left
                 dir[1] = 0
             else:
                 r, l, u, d = self.room_checker(rect, rooms, block, "left")
@@ -81,7 +78,7 @@ class main():
                 else:
                     dir[1] = 1
                 
-            if rect.centery - (block*18) < (size[1] - size[1]): #checking up
+            if rect.centery - (block*40) < (size[1] - size[1]): #checking up
                 dir[2] = 0
             else:
                 r, l, u, d = self.room_checker(rect, rooms, block, "up")
@@ -89,7 +86,7 @@ class main():
                     dir[2] = 0
                 else:
                     dir[2] = 1
-            if rect.centery + (block*18) > size[1]: #checking down
+            if rect.centery + (block*40) > size[1]: #checking down
                 dir[3] = 0
             else:
                 r, l, u, d = self.room_checker(rect, rooms, block, "down")
@@ -98,23 +95,22 @@ class main():
                 else:
                     dir[3] = 1
             
-        print dir
-        # Them we add the required distance to the X/Y coords. (we still need the size of the next Rect for left and up)
+        print dir # Them we add the required distance to the X/Y coords. (we still need the size of the next Rect for left and up)
         if dir[0] == 1: # moving right
-            x = (rect.x + rect.width + (block*2))
+            x = (rect.x + rect.width)
             y = rect.y
             run = True
         elif dir[1] == 1: # moving left
-            x = (rect.x -(block*2))
+            x = rect.x
             y = rect.y
             run = True
         elif dir[2] == 1: # moving up
             x = rect.x
-            y = (rect.y - (block*2))
+            y = rect.y
             run = True
         elif dir[3] == 1: # moving down
             x = rect.x
-            y = (rect.y + rect.height +(block*2))
+            y = (rect.y + rect.height)
             run = True
         elif dir == [0, 0, 0, 0]: # end of loop
             x = rect.x
@@ -123,38 +119,37 @@ class main():
         
         return x, y, dir, run
                       
-                    
-    def room_checker(self, rect, rooms, block, dir): # This method checks if there are any previous rectangles in the way in any direciton.
+    def room_checker(self, rect, rooms, block, dir): # This method checks if there are any previous rectangles in the way in any direction.
         right = left = up = down = True
         for i in rooms:
             if dir == "right":
                 if rect.right < i.left: #right
-                    if (rect.right + (block*28)) > i.left:
-                        if (rect.top + (block*4)) < i.bottom and (rect.bottom + (block*4)) > i.top: 
+                    if (rect.right + (block*40)) > i.left:
+                        if (rect.top + (block*8)) < i.bottom and (rect.bottom + (block*8)) > i.top: 
                                 right = False
             if dir == "left":
                 if rect.left > i.right: #left
-                    if (rect.left - (block*28)) < i.right:
-                        if (rect.top + (block*4)) < i.bottom and (rect.bottom + (block*4)) > i.top: 
+                    if (rect.left - (block*40)) < i.right:
+                        if (rect.top + (block*8)) < i.bottom and (rect.bottom + (block*8)) > i.top: 
                                 left = False
             
             if dir == "up":
                 if rect.top > i.bottom: #up
-                    if (rect.top - (block*28)) < i.bottom:
-                        if (rect.left - (block*4)) < i.right and (rect.right + (block*4)) > i.left: 
+                    if (rect.top - (block*40)) < i.bottom:
+                        if (rect.left - (block*8)) < i.right and (rect.right + (block*8)) > i.left: 
                                 up = False
             
             if dir == "down":
                 if rect.bottom < i.top: #down
-                    if (rect.bottom + (block*28)) > i.top:
-                        if (rect.left - (block*4)) < i.right and (rect.right + (block*4)) > i.left: 
+                    if (rect.bottom + (block*40)) > i.top:
+                        if (rect.left - (block*8)) < i.right and (rect.right + (block*8)) > i.left: 
                                 down = False
             
         return right, left, up, down
             
 
                             
-    # Generates a room rectangle of random size, and ties the other rects together.        
+    # Generates a room rectangle of random size, and ties the other rects together.      
     def generate_room(self, block):
         run = True
         x = block
@@ -163,33 +158,50 @@ class main():
         walls = []
         rects = []
         dir = [0, 0, 0, 0]
-        
+        runtime = 0
+        y_p = x_p = 0
         while run == True:
             hw = random.randrange((block*4), (block*12), block)
             hh = random.randrange((block*4), (block*12), block)
+            hp = random.randint(1, 4)
+            if runtime == 1:
+                y_p = ((rh/4) * hp)
+                x_p = ((rw/4) * hp)
+            runtime = 1
             
             rw = random.randrange((block*8), (block*24), block)
             rh = random.randrange((block*8), (block*24), block)
             if dir[0] == 1:#right
                 hh = block*2
+                y += y_p  
             elif dir[1] == 1:#left
                 hh = block*2
                 x -= hw
+                y += y_p
             elif dir[2] == 1:#up
                 hw = block*2
                 y -= hh
+                x += x_p
             elif dir[3] == 1:#down
                 hw = block*2
+                x += x_p
             myhall = pygame.Rect(x, y, hw, hh)
-            x, y, dir, run = self.direction(myhall, rects, block, run)
-            if dir[0] == 1:
-                pass
+            
+            if dir[0] == 1:#right
+                x += hw
+                y -= y_p 
             elif dir[1] == 1:#left
                 x -= rw
+                y -= y_p
             elif dir[2] == 1:#up
                 y -= rh
+                x -= x_p
+            elif dir[3] == 1:#down
+                y += hh
+                x -= x_p
+                
             myrect = pygame.Rect(x, y, rw, rh)
-            x, y, dir, run = self.direction(myrect, rects, block, run)
+            x, y, dir, run = self.direction(myrect, rects, block, run) #Checks the directions
             rects.append(myhall)
             rects.append(myrect)
             room_tiles, wall_tiles = self.sprite_map(myhall, block)
@@ -240,7 +252,7 @@ class main():
     
     
                     
-class Player(pygame.sprite.DirtySprite): # The player sprite (doesnt really do anything)
+class Player(pygame.sprite.DirtySprite): # Here we make the rooms with floor tiles and wall tiles.
     def __init__(self, screen):
         pygame.sprite.DirtySprite.__init__(self)
         self.image = pygame.image.load("Arrow_cursor.png").convert_alpha()
