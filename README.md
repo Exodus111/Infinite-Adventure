@@ -14,6 +14,7 @@ To do:
     5.1 (Make a player starting position in the level file) DONE
     5.2 (Make the exit block load the next level)DONE
     5.3 (Make at least 5 levels)DONE
+    5.4 Generate levels procedurally. (Not implemented but is done in the file Tiletest)
     6. Add enemy NPCs.
     7. Add powers.
     8. Add a rudimentary GUI.
