@@ -48,52 +48,34 @@ class Game(Engine):
         self.mouse_pos = (0, 0)
         
         # Here I load up the player, and the variables necessary for movement and rotation.
-        self.player_rect = pygame.Rect(132, 132, 38, 38)
-        self.player_image = pygame.image.load("Arrow_cursor.png").convert_alpha()
-        self.player_rot = 90
-        self.player_dir = [0,0,0,0]
-        
-        self.player = Player(self.player_rect, self.player_rot, 15 )
+        self.player = Player()
         
         npcrect = pygame.Rect(500, 200, 32, 32)
         npcimage = pygame.image.load("Greendot.png").convert_alpha()
         self.npc1 = NPC(npcimage, npcrect, 10)
-        
+     
+    
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
     def update(self):
-        self.map_generate(self.lvlnum, self.lvls, self.blocksize, self.player_rect)
-        self.next_level(self.player_rect, self.end_rect)
+        self.map_generate(self.lvlnum, self.lvls, self.blocksize, self.player.rect)
+        self.next_level(self.player.rect, self.end_rect)
         
         # Here I find the player location on the screen. (since the player is actually moving around on the background surface) 
-        self.cp = self.find_player(self.player_rect.x, self.player_rect.y, self.bx_pos, self.by_pos)
+        self.cp = self.find_player(self.player.rect.x, self.player.rect.y, self.bx_pos, self.by_pos)
         
         # Movement for the player.
-        self.player_move(self.player_dir, self.cp, (self.w, self.h), self.walls, self.player.player_rect, self.player.player_speed)
+        self.player_move(self.player.dir, self.cp, (self.w, self.h), self.walls, self.player.rect, self.player.speed)
 
         # This method call ensures the player image does not deform under rotation
         # IMPORTANT: the player image MUST be a square (equal sides).
-        self.playerimg = self.rotate_image(self.player_image, (self.player_rot))
+        self.playerimg = self.rotate_image(self.player.image, (self.player.rot))
         
         # Here we scroll the map using the mouse pointer.
-        if self.mouse_pos[0] >= (self.w - (self.w /8)):
-            if (self.bx_pos + self.level_size[0])  >= self.w + self.blocksize:
-                if self.cp[0] > self.blocksize: 
-                    self.bx_pos -= 50
-        elif self.mouse_pos[0] <= (self.w /8):
-            if self.bx_pos  < -self.blocksize:
-                if self.cp[0] < (self.w - self.blocksize):
-                    self.bx_pos += 50
-        elif self.mouse_pos[1] >= (self.h - (self.h /8)):
-            if (self.by_pos + self.level_size[1])  >= self.h + self.blocksize:
-                if self.cp[1] > self.blocksize:
-                    self.by_pos -= 50
-        elif self.mouse_pos[1] <= (self.h /8):
-            if (self.by_pos)  < -self.blocksize:
-                if self.cp[1] < (self.h - self.blocksize):
-                    self.by_pos += 50 
+        self.bx_pos, self.by_pos = self.map_scroll(self.mouse_pos, self.w, self.h, self.level_size, self.cp, self.blocksize, self.bx_pos, self.by_pos)
+
     
-        self.npc_track(self.player_rect, self.walls, self.npc1.npcmove, self.npc1.rect, self.npc1.speed)
+        self.npc_track(self.player.rect, self.walls, self.npc1.npcmove, self.npc1.rect, self.npc1.speed)
     
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.            
@@ -114,8 +96,8 @@ class Game(Engine):
         
         self.background.blit(self.npc1.image, (self.npc1.rect.x, self.npc1.rect.y))
         # Here we draw the player, and the player image to the background.
-        pygame.draw.rect(self.background, (255, 255, 255,), self.player_rect, -1)
-        self.background.blit(self.playerimg, ((self.player_rect.x -3), (self.player_rect.y -3)))
+        pygame.draw.rect(self.background, (255, 255, 255,), self.player.rect, -1)
+        self.background.blit(self.playerimg, ((self.player.rect.x -3), (self.player.rect.y -3)))
         
         # Here we draw the mouse pointer image to the screen (NOT the background)
         self.screen.blit(self.mouse_image, self.mouse_pos)
@@ -125,26 +107,26 @@ class Game(Engine):
     # An event method giving us all key down presses.
     def key_down(self, key):
         if key in (K_w, K_UP):
-            self.player_dir[0] = 1
+            self.player.dir[0] = 1
         if key in (K_a, K_LEFT):
-            self.player_dir[1] = 1
+            self.player.dir[1] = 1
         if key in (K_s, K_DOWN):
-            self.player_dir[2] = 1
+            self.player.dir[2] = 1
         if key in (K_d, K_RIGHT):
-            self.player_dir[3] = 1
+            self.player.dir[3] = 1
         if key == K_ESCAPE:
             pygame.quit()
 
     # An event method giving us all key up presses. 
     def key_up(self, key):
         if key in (K_w, K_UP):
-            self.player_dir[0] = 0
+            self.player.dir[0] = 0
         if key in (K_a, K_LEFT):
-            self.player_dir[1] = 0
+            self.player.dir[1] = 0
         if key in (K_s, K_DOWN):
-            self.player_dir[2] = 0
+            self.player.dir[2] = 0
         if key in (K_d, K_RIGHT):
-            self.player_dir[3] = 0
+            self.player.dir[3] = 0
     
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
@@ -159,24 +141,47 @@ class Game(Engine):
         self.mouse_pos = pos
         
         # Here we call the method to rotate the mouse.
-        self.player_rot = self.rotate((self.cp[0], self.cp[1]), self.mouse_pos)
+        self.player.rot = self.rotate((self.cp[0], self.cp[1]), self.mouse_pos)
              
     
-class Player(Engine):  
+class Player(pygame.sprite.Sprite):  
     # Here I load up the player, and the variables necessary for movement and rotation.
-    def __init__(self, rect, rot, speed ):
-        self.player_rect = rect
-        self.player_rot = rot
-        self.player_speed = speed
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.rect = pygame.Rect(132, 132, 38, 38)
+        self.image = pygame.image.load("Arrow_cursor.png").convert_alpha()
+        self.rot = 90
+        self.speed = 15
+        self.dir = [0, 0, 0, 0]
                 
                 
 
-class NPC(Engine):
+class NPC(pygame.sprite.Sprite):
     def __init__(self, image, rect, speed):
+        pygame.sprite.Sprite.__init__(self)
         self.image = image
         self.rect = rect
         self.speed = speed
         self.npcmove = [0, 0, 0, 0]
+        
+class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
+    def __init__(self, surf, blocksize, select):
+        pygame.sprite.DirtySprite.__init__(self)
+        self.tile_select(blocksize, select)
+        self.dirty = 1
+        self.area = surf
+    
+    def tile_select(self, blocksize, select):
+        if select == 1:
+            self.image = pygame.image.load("stone.jpg").convert()
+            self.rect = self.image.get_rect()
+        if select == 2:
+            self.image = pygame.image.load("wood.jpg").convert()
+            self.rect = self.image.get_rect()
+        if select == 3:
+            self.image = pygame.image.load("blacktile.jpg").convert()
+            self.rect = self.image.get_rect()
+        
         
                             
                                  

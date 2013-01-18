@@ -14,30 +14,32 @@ class main():
     def __init__(self):
         pygame.init()
         screen = pygame.display.set_mode((1024, 960))
-        
-        background = pygame.Surface((6400, 6400))
+        size = (6400, 6400)
+        background = pygame.Surface(size)
         background = background.convert()
         background.fill((250, 250, 250))
         kx = ky = 0
-        self.background = background
         pygame.display.flip()
         
         clock = pygame.time.Clock()
         
         blocksize = 32 # This is important as it sets the base blocks all the maps are based on.
-        size = 2
         
         player = Player(screen) # I added a playersprite, but it does nothing.
         
-        roomTiles, wallTiles = self.generate_room(blocksize)# This generates the map into two lists of sprites.
+        roomTiles, wallTiles = self.generate_room(blocksize, size)# This generates the map into two lists of sprites.
+        
+        
         list = [wallTiles, roomTiles] # Here I put both lists into another, the position is important, as the second placement will override the first.
         allsprites = pygame.sprite.LayeredDirty((list, player)) # Here I add the list to a DirtySprite class (does nothing atm)
+        run = 1
         
-        while True:
+        while run == 1:
             clock.tick(60)
             
             for event in pygame.event.get():
                 if event.type == QUIT:
+                    run = 0
                     pygame.quit()
                 if event.type == KEYDOWN:
                     if event.key == K_w:
@@ -55,8 +57,8 @@ class main():
             pygame.display.update()
             allsprites.clear(screen, background)
             
-    def direction(self, rect, rooms, block, run): #This methods checks each direction to see if there is space for another room there.
-        size = self.background.get_size()
+    def direction(self, rect, rooms, block, run, surf): #This methods checks each direction to see if there is space for another room there.
+        size = surf
         print size[0]
         print size [1]
         dir = [1, 1, 1, 1]
@@ -150,7 +152,8 @@ class main():
 
                             
     # Generates a room rectangle of random size, and ties the other rects together.      
-    def generate_room(self, block):
+    def generate_room(self, block, surf):
+        print surf[0]
         run = True
         x = block
         y = block
@@ -158,50 +161,35 @@ class main():
         walls = []
         rects = []
         dir = [0, 0, 0, 0]
-        runtime = 0
-        y_p = x_p = 0
+        
         while run == True:
             hw = random.randrange((block*4), (block*12), block)
             hh = random.randrange((block*4), (block*12), block)
-            hp = random.randint(1, 4)
-            if runtime == 1:
-                y_p = ((rh/4) * hp)
-                x_p = ((rw/4) * hp)
-            runtime = 1
             
             rw = random.randrange((block*8), (block*24), block)
             rh = random.randrange((block*8), (block*24), block)
             if dir[0] == 1:#right
                 hh = block*2
-                y += y_p  
             elif dir[1] == 1:#left
                 hh = block*2
                 x -= hw
-                y += y_p
             elif dir[2] == 1:#up
                 hw = block*2
                 y -= hh
-                x += x_p
             elif dir[3] == 1:#down
                 hw = block*2
-                x += x_p
             myhall = pygame.Rect(x, y, hw, hh)
             
             if dir[0] == 1:#right
-                x += hw
-                y -= y_p 
+                x += hw 
             elif dir[1] == 1:#left
                 x -= rw
-                y -= y_p
             elif dir[2] == 1:#up
                 y -= rh
-                x -= x_p
             elif dir[3] == 1:#down
                 y += hh
-                x -= x_p
-                
             myrect = pygame.Rect(x, y, rw, rh)
-            x, y, dir, run = self.direction(myrect, rects, block, run) #Checks the directions
+            x, y, dir, run = self.direction(myrect, rects, block, run, surf) #Checks the directions
             rects.append(myhall)
             rects.append(myrect)
             room_tiles, wall_tiles = self.sprite_map(myhall, block)
