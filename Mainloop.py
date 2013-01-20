@@ -9,7 +9,7 @@ Created on Dec 29, 2012
 
 import pygame, math, sys, os, random
 from pygame.locals import *
-from Inf_Adv import *
+from Entities import *
 
 # First we intialize pygame and set up a few class variables.
 class Engine(object):
@@ -47,7 +47,7 @@ class Engine(object):
             self.event_handler()
             self.update()
             self.draw()
-            pygame.display.flip()
+            #pygame.display.flip()
             self.clock.tick(fps)
             
     
@@ -92,6 +92,7 @@ class Engine(object):
             if screenpos[0] < (screensize[0] - (screensize[0]/50)):
                 player_rect.x += player_speed
                 self.collision(walls, player_rect, "RIGHT")
+        
     
     # Rotates any object, to face any other object.        
     def rotate(self, pos1, pos2):  
@@ -111,16 +112,17 @@ class Engine(object):
 # Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
 # the rect object to check and a string for collision.
     def collision(self, walls, rect, direction):
-        for wall in walls:
-            if rect.colliderect(wall):
-                if direction == "UP":
-                    rect.top = wall.bottom
-                if direction == "LEFT":
-                    rect.left = wall.right
-                if direction == "DOWN":
-                    rect.bottom = wall.top
-                if direction == "RIGHT":
-                    rect.right = wall.left
+        for rooms in walls:
+            for wall in rooms:
+                if rect.colliderect(wall.rect):
+                    if direction == "UP":
+                        rect.top = wall.rect.bottom
+                    if direction == "LEFT":
+                        rect.left = wall.rect.right
+                    if direction == "DOWN":
+                        rect.bottom = wall.rect.top
+                    if direction == "RIGHT":
+                        rect.right = wall.rect.left
                     
     # We are using two surfaces, one for the screen and one for the map (so I can scroll the game)
         # So I needed a method to find the location of an object on the background surface to the screen surface.
@@ -206,9 +208,14 @@ class Engine(object):
     
     # Below this line we start making the map:
     
+    def test_room(self, block):
+        testRoom = pygame.Rect(block, block, (block*20), (block*20))
+        floor, walls = self.sprite_map(testRoom, block)
+        
+        return floor, walls
+    
     # Generates a room rectangle of random size, and ties the other rects together.      
     def generate_room(self, block, surf):
-        print surf[0]
         run = True
         x = block
         y = block
@@ -257,8 +264,6 @@ class Engine(object):
     
     def direction(self, rect, rooms, block, run, surf): #This methods checks each direction to see if there is space for another room there.
         size = surf
-        print size[0]
-        print size [1]
         dir = [1, 1, 1, 1]
         if rooms != []:
             if rect.centerx + (block*40) > size[0]: #checking right
@@ -294,8 +299,9 @@ class Engine(object):
                     dir[3] = 0
                 else:
                     dir[3] = 1
-            
-        print dir # Them we add the required distance to the X/Y coords. (we still need the size of the next Rect for left and up)
+        
+        print dir    
+       # Them we add the required distance to the X/Y coords. (we still need the size of the next Rect for left and up)
         if dir[0] == 1: # moving right
             x = (rect.x + rect.width)
             y = rect.y
@@ -316,6 +322,8 @@ class Engine(object):
             x = rect.x
             y = rect.y
             run = False
+            
+        return x, y, dir, run
             
     
     def room_checker(self, rect, rooms, block, dir): # This method checks if there are any previous rectangles in the way in any direction.
@@ -353,8 +361,10 @@ class Engine(object):
         col = ((surf.bottom - surf.top) / block)
         fx = surf.left
         fy = surf.top
-        wx = (surf.left - block)
-        wy = (surf.top - block)
+        print fx, fy
+        wx = (surf.left - (block*2))
+        wy = (surf.top - (block*2))
+        print wx, wy
         
         room_tiles = []
         wall_tiles = []
@@ -369,8 +379,8 @@ class Engine(object):
             fy += block
             fx = surf.left
             
-        for part in range(col + 2):
-            for i in range(row + 2):
+        for part in range(col + 4):
+            for i in range(row + 4):
                 i = Tile(surf, block, 1)
                 i.rect.x = wx
                 i.rect.y = wy
@@ -381,6 +391,17 @@ class Engine(object):
             wx = (surf.left - block)
             
         return room_tiles, wall_tiles
+    
+    def collision_list(self, walls, floors):
+        wall_list = walls
+        for room in floors:
+            for i in room:
+                for rooms in wall_list:
+                    for r in rooms:
+                        if r.rect.colliderect(i) == True:
+                            rooms.remove(r)
+        return wall_list
+                  
     
     
     def map_generate_old(self, lvlnum, lvlfile, blocksize, player_rect):
