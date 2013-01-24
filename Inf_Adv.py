@@ -44,15 +44,16 @@ class Game(Engine):
         npcimage = pygame.image.load("Greendot.png").convert_alpha()
         self.npc1 = NPC(npcimage, npcrect, 10)
         
-        roomTiles, wallTiles = self.generate_room(self.blocksize, self.level_size)
-        self.walls = self.collision_list(wallTiles, roomTiles)
-        self.allsprites = pygame.sprite.RenderPlain((wallTiles, roomTiles))
+        #roomTiles, wallTiles = self.generate_room(self.blocksize, self.level_size)
+        #self.walls = wallTiles
+        #self.allsprites = pygame.sprite.RenderUpdates((wallTiles, roomTiles))
         
-        #roomTiles, wallTiles = self.test_room(self.blocksize)
-        #self.t_rooms = [roomTiles]
-        #self.t_walls = [wallTiles]
-        #self.walls = self.collision_list(self.t_walls, self.t_rooms)
-        #self.allsprites = pygame.sprite.RenderPlain((self.t_walls, self.t_rooms))
+        
+        roomTiles, wallTiles = self.test_room(self.blocksize)
+        self.t_rooms = [roomTiles]
+        self.t_walls = [wallTiles]
+        self.walls = self.collision_list(self.t_walls, self.t_rooms)
+        self.allsprites = pygame.sprite.RenderPlain((self.t_walls, self.t_rooms))
         
         self.playerimg = self.player.image
         
@@ -89,8 +90,9 @@ class Game(Engine):
         self.screen.blit(self.background, (self.bx_pos, self.by_pos))
         self.screen.blit(self.mouse_image, self.mouse_pos)
         
+        
         pygame.display.update()
-        self.allsprites.clear(self.screen, self.background)
+        #self.allsprites.clear(self.screen, self.background)
         
         #Temp out of order  self.background.blit(self.npc1.image, (self.npc1.rect.x, self.npc1.rect.y))
         
