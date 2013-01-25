@@ -39,9 +39,9 @@ class main():
         self.generate_room(blocksize, size, fgroup, wgroup)
         print len(wgroup)
         print len(fgroup)
-        #wallremove = pygame.sprite.groupcollide(wgroup, fgroup, True, False)
+        wallremove = pygame.sprite.groupcollide(wgroup, fgroup, True, False)
         #print len(wgroup)
-        allsprites = pygame.sprite.LayeredUpdates(wgroup, fgroup)
+        allsprites = pygame.sprite.LayeredUpdates(fgroup, wgroup)
         
         run = 1
         
@@ -282,9 +282,9 @@ class Room(pygame.sprite.Sprite):
 
         
 
-class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
+class Tile(pygame.sprite.Sprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
     def __init__(self, surf, blocksize, select):
-        pygame.sprite.DirtySprite.__init__(self)
+        pygame.sprite.Sprite.__init__(self)
         self.area = surf
         self.tile_select(blocksize, select)
     
@@ -304,9 +304,9 @@ class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in e
             
             
 
-class Player(pygame.sprite.DirtySprite): # Here we make the rooms with floor tiles and wall tiles.
+class Player(pygame.sprite.Sprite): # Here we make the rooms with floor tiles and wall tiles.
     def __init__(self, screen):
-        pygame.sprite.DirtySprite.__init__(self)
+        pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("Arrow_cursor.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.area = screen

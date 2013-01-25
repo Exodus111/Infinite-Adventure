@@ -28,6 +28,63 @@ class NPC(pygame.sprite.Sprite):
         self.speed = speed
         self.npcmove = [0, 0, 0, 0]
         
+
+class Room(pygame.sprite.Sprite):
+    def __init__(self, w, h, x, y, block, fg, wg, num):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((w, h))
+        self.rect = pygame.Rect(x, y, w, h)
+        self.number = num
+        tiles, walls = self.sprite_map(block)
+        self.tiles, self.walls = self.wall_collide(tiles, walls)
+        fg.add(self.tiles)
+        wg.add(self.walls)
+        
+    def wall_collide(self, tiles, walls):
+        pygame.sprite.groupcollide(walls, tiles, True, False)
+        return tiles, walls
+        
+        
+    # Here we make the rooms with floor tiles and wall tiles.
+    def sprite_map(self, block):
+        surf = self.image
+        row = ((self.rect.right - self.rect.left) / block)
+        col = ((self.rect.bottom - self.rect.top) / block)
+        fx = self.rect.left
+        fy = self.rect.top
+        wx = (self.rect.left - (block))
+        wy = (self.rect.top - (block))
+        
+        room_tiles = pygame.sprite.Group()
+        wall_tiles = pygame.sprite.Group()
+        for part in xrange(col):
+            for i in xrange(row):
+                i = Tile(surf, block, 3)
+                i.rect.left = fx
+                i.rect.top = fy
+                room_tiles.add(i)
+                fx += block
+                
+            fy += block
+            fx = self.rect.left
+        
+        
+        for part in range(col + 2):
+            for i in range(row + 2):
+                i = Tile(surf, block, 1)
+                i.rect.x = wx
+                i.rect.y = wy
+                wall_tiles.add(i)
+                wx += block
+                
+            wy += block
+            wx = (self.rect.left - block)
+                
+        return room_tiles, wall_tiles
+
+
+
+        
 class Tile(pygame.sprite.Sprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
     def __init__(self, surf, blocksize, select):
         pygame.sprite.Sprite.__init__(self)

@@ -75,23 +75,23 @@ class Engine(object):
         pass
     
    # Movement and collision detection calls for the player 
-    def player_move(self, dir, screenpos, screensize, walls, player_rect, player_speed):
+    def player_move(self, dir, screenpos, screensize, rooms, player, player_speed):
         if dir[0] == 1:
             if screenpos[1] > (screensize[1]/50):    
-                player_rect.y -= player_speed
-                self.collision(walls, player_rect, "UP")
+                player.rect.y -= player_speed
+                self.collision(rooms, player, "UP")
         if dir[1] == 1:
             if screenpos[0] > (screensize[0]/50):
-                player_rect.x -= player_speed
-                self.collision(walls, player_rect, "LEFT")
+                player.rect.x -= player_speed
+                self.collision(rooms, player, "LEFT")
         if dir[2] == 1:
             if screenpos[1] < (screensize[1] - (screensize[1]/50)):
-                player_rect.y += player_speed
-                self.collision(walls, player_rect, "DOWN")
+                player.rect.y += player_speed
+                self.collision(rooms, player, "DOWN")
         if dir[3] == 1:
             if screenpos[0] < (screensize[0] - (screensize[0]/50)):
-                player_rect.x += player_speed
-                self.collision(walls, player_rect, "RIGHT")
+                player.rect.x += player_speed
+                self.collision(rooms, player, "RIGHT")
         
     
     # Rotates any object, to face any other object.        
@@ -111,18 +111,24 @@ class Engine(object):
     
 # Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
 # the rect object to check and a string for collision.
-    def collision(self, walls, rect, direction):
-        for rooms in walls:
-            for wall in rooms:
-                if rect.colliderect(wall.rect):
-                    if direction == "UP":
-                        rect.top = wall.rect.bottom
-                    if direction == "LEFT":
-                        rect.left = wall.rect.right
-                    if direction == "DOWN":
-                        rect.bottom = wall.rect.top
-                    if direction == "RIGHT":
-                        rect.right = wall.rect.left
+    def collision(self, rooms, sprite, direction):
+        
+        for i in rooms:
+            if sprite.rect.colliderect(i.rect) == True:
+                print i.number
+                for wall in i.walls:
+                    if sprite.rect.colliderect(wall.rect) == True:
+                        if direction == "UP":
+                            sprite.rect.top = wall.rect.bottom
+                        if direction == "LEFT":
+                            sprite.rect.left = wall.rect.right
+                        if direction == "DOWN":
+                            sprite.rect.bottom = wall.rect.top
+                        if direction == "RIGHT":
+                            sprite.rect.right = wall.rect.left
+                      
+        
+       
                     
     # We are using two surfaces, one for the screen and one for the map (so I can scroll the game)
         # So I needed a method to find the location of an object on the background surface to the screen surface.
@@ -180,22 +186,22 @@ class Engine(object):
         if mouse_pos[0] >= (sw - (sw /8)):
             if (bx_pos + level_size[0])  >= sw + blocksize:
                 if cp[0] > blocksize: 
-                    bx_pos -= 50
+                    bx_pos -= 5
 
         elif mouse_pos[0] <= (sw /8):
             if bx_pos  < -blocksize:
                 if cp[0] < (sw - blocksize):
-                    bx_pos += 50
+                    bx_pos += 5
             
         elif mouse_pos[1] >= (sh - (sh /8)):
             if (by_pos + level_size[1])  >= sh + blocksize:
                 if cp[1] > blocksize:
-                    by_pos -= 50
+                    by_pos -= 5
           
         elif mouse_pos[1] <= (sh /8):
             if (by_pos)  < -blocksize:
                 if cp[1] < (sh - blocksize):
-                    by_pos += 50
+                    by_pos += 5
                     return bx_pos, by_pos
         return bx_pos, by_pos
     
@@ -214,59 +220,75 @@ class Engine(object):
         
         return floor, walls
     
-    # Generates a room rectangle of random size, and ties the other rects together.      
-    def generate_room(self, block, surf):
+     # Generates a room rectangle of random size, and ties the other rects together.      
+    def generate_room(self, block, surf, fg, wg):
         run = True
-        x = block
-        y = block
+        roomx, roomy = (block*2), (block*20)
+        hw = hh = rw = rh = 1000
         rooms = []
-        walls = []
-        rects = []
         dir = [0, 0, 0, 0]
-        
-        while run == True:
-            hw = random.randrange((block*4), (block*12), block)
-            hh = random.randrange((block*4), (block*12), block)
-            
-            rw = random.randrange((block*8), (block*24), block)
-            rh = random.randrange((block*8), (block*24), block)
-            if dir[0] == 1:#right
+        room_number = 0
+        while run:
+           
+           hw = random.randrange((block*8), (block*16), block)
+           hh = random.randrange((block*8), (block*16), block)
+           
+           hew = random.randrange((rw - rw),(rw - (block*4)), block)
+           heh = random.randrange((rh - rh), (rh - (block*4)), block)
+           if dir[0] == 1:#right
                 hh = block*2
-            elif dir[1] == 1:#left
+                roomy += heh
+                
+           elif dir[1] == 1:#left
                 hh = block*2
-                x -= hw
-            elif dir[2] == 1:#up
+                roomx -= hw
+                roomy += heh
+           elif dir[2] == 1:#up
                 hw = block*2
-                y -= hh
-            elif dir[3] == 1:#down
+                roomy -= hh
+                roomx += hew
+           elif dir[3] == 1:#down
                 hw = block*2
-            myhall = pygame.Rect(x, y, hw, hh)
-            
-            if dir[0] == 1:#right
-                x += hw 
-            elif dir[1] == 1:#left
-                x -= rw
-            elif dir[2] == 1:#up
-                y -= rh
-            elif dir[3] == 1:#down
-                y += hh
-            myrect = pygame.Rect(x, y, rw, rh)
-            x, y, dir, run = self.direction(myrect, rects, block, run, surf) #Checks the directions
-            rects.append(myhall)
-            rects.append(myrect)
-            room_tiles, wall_tiles = self.sprite_map(myhall, block)
-            rooms.append(room_tiles)
-            walls.append(wall_tiles)
-            room_tiles, wall_tiles = self.sprite_map(myrect, block)
-            rooms.append(room_tiles)
-            walls.append(wall_tiles)
-        return rooms, walls
+                roomx += hew
+           else:
+               roomx += hw
+         
+           if rooms != []:
+               hall = Room(hw, hh, roomx, roomy, block, fg, wg, room_number)
+               rooms.append(hall)
+           
+           rw = random.randrange((block*16), (block*40), block)
+           rh = random.randrange((block*16), (block*40), block)
+           
+           hew = random.randrange((rw - rw),(rw - (block*4)), block)
+           heh = random.randrange((rh - rh), (rh - (block*4)), block)
+           
+           if dir[0] == 1:#right
+               roomx += hw 
+               roomy -= heh
+           elif dir[1] == 1:#left
+               roomx -= rw
+               roomy -= heh
+           elif dir[2] == 1:#up
+               roomy -= rh
+               roomx -= hew
+           elif dir[3] == 1:#down
+               roomy += hh
+               roomx -= hew
+           
+           room_number += 1     
+           room = Room(rw, rh, roomx, roomy, block, fg, wg, room_number)
+           rooms.append(room)
+           
+           roomx, roomy, dir, run = self.direction(room.rect, rooms, block, run, surf)
+           
+        return rooms
     
     def direction(self, rect, rooms, block, run, surf): #This methods checks each direction to see if there is space for another room there.
         size = surf
         dir = [1, 1, 1, 1]
         if rooms != []:
-            if rect.centerx + (block*40) > size[0]: #checking right
+            if rect.centerx + (block*60) > size[0]: #checking right
                 dir[0] = 0 
             else: 
                 r, l, u, d = self.room_checker(rect, rooms, block, "right")
@@ -274,7 +296,7 @@ class Engine(object):
                     dir[0] = 0    
                 else:
                     dir[0] = 1
-            if rect.centerx - (block*40) < (size[0] - size[0]): #checking left
+            if rect.centerx - (block*60) < (size[0] - size[0]): #checking left
                 dir[1] = 0
             else:
                 r, l, u, d = self.room_checker(rect, rooms, block, "left")
@@ -283,7 +305,7 @@ class Engine(object):
                 else:
                     dir[1] = 1
                 
-            if rect.centery - (block*40) < (size[1] - size[1]): #checking up
+            if rect.centery - (block*60) < (size[1] - size[1]): #checking up
                 dir[2] = 0
             else:
                 r, l, u, d = self.room_checker(rect, rooms, block, "up")
@@ -291,7 +313,7 @@ class Engine(object):
                     dir[2] = 0
                 else:
                     dir[2] = 1
-            if rect.centery + (block*40) > size[1]: #checking down
+            if rect.centery + (block*60) > size[1]: #checking down
                 dir[3] = 0
             else:
                 r, l, u, d = self.room_checker(rect, rooms, block, "down")
@@ -330,67 +352,31 @@ class Engine(object):
         right = left = up = down = True
         for i in rooms:
             if dir == "right":
-                if rect.right < i.left: #right
-                    if (rect.right + (block*40)) > i.left:
-                        if (rect.top + (block*8)) < i.bottom and (rect.bottom + (block*8)) > i.top: 
+                if rect.right < i.rect.left: #right
+                    if (rect.right + (block*60)) > i.rect.left:
+                        if (rect.top + (block*16)) < i.rect.bottom and (rect.bottom + (block*8)) > i.rect.top: 
                                 right = False
             if dir == "left":
-                if rect.left > i.right: #left
-                    if (rect.left - (block*40)) < i.right:
-                        if (rect.top + (block*8)) < i.bottom and (rect.bottom + (block*8)) > i.top: 
+                if rect.left > i.rect.right: #left
+                    if (rect.left - (block*60)) < i.rect.right:
+                        if (rect.top + (block*16)) < i.rect.bottom and (rect.bottom + (block*8)) > i.rect.top: 
                                 left = False
             
             if dir == "up":
-                if rect.top > i.bottom: #up
-                    if (rect.top - (block*40)) < i.bottom:
-                        if (rect.left - (block*8)) < i.right and (rect.right + (block*8)) > i.left: 
+                if rect.top > i.rect.bottom: #up
+                    if (rect.top - (block*60)) < i.rect.bottom:
+                        if (rect.left - (block*16)) < i.rect.right and (rect.right + (block*8)) > i.rect.left: 
                                 up = False
             
             if dir == "down":
-                if rect.bottom < i.top: #down
-                    if (rect.bottom + (block*40)) > i.top:
-                        if (rect.left - (block*8)) < i.right and (rect.right + (block*8)) > i.left: 
+                if rect.bottom < i.rect.top: #down
+                    if (rect.bottom + (block*60)) > i.rect.top:
+                        if (rect.left - (block*16)) < i.rect.right and (rect.right + (block*8)) > i.rect.left: 
                                 down = False
             
         return right, left, up, down
     
-    # Here we make the rooms with floor tiles and wall tiles.
-    def sprite_map(self, rect, block):
-        surf = rect
-        row = ((surf.right - surf.left) / block)
-        col = ((surf.bottom - surf.top) / block)
-        fx = surf.left
-        fy = surf.top
-        print fx, fy
-        wx = (surf.left - (block*2))
-        wy = (surf.top - (block*2))
-        print wx, wy
-        
-        room_tiles = []
-        wall_tiles = []
-        for part in range(col):
-            for i in range(row):
-                i = Tile(surf, block, 3)
-                i.rect.left = fx
-                i.rect.top = fy
-                room_tiles.append(i)
-                fx += block
-                
-            fy += block
-            fx = surf.left
-            
-        for part in range(col + 4):
-            for i in range(row + 4):
-                i = Tile(surf, block, 1)
-                i.rect.x = wx
-                i.rect.y = wy
-                wall_tiles.append(i)
-                wx += block
-                
-            wy += block
-            wx = (surf.left - block)
-            
-        return room_tiles, wall_tiles
+    
     
     def collision_list(self, walls, floors):
         wall_list = walls
