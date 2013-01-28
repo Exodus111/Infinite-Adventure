@@ -6,10 +6,10 @@ Created on Jan 19, 2013
 import pygame
 from pygame.locals import *
 
-class Player(pygame.sprite.Sprite):  
+class Player(pygame.sprite.DirtySprite):  
     # Here I load up the player, and the variables necessary for movement and rotation.
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
+        pygame.sprite.DirtySprite.__init__(self)
         self.rect = pygame.Rect(132, 132, 38, 38)
         self.image = pygame.image.load("Arrow_cursor.png").convert_alpha()
         self.dirty = 1
@@ -27,7 +27,17 @@ class NPC(pygame.sprite.Sprite):
         self.dirty = 1
         self.speed = speed
         self.npcmove = [0, 0, 0, 0]
+
+class GameSurface(pygame.sprite.DirtySprite):
+    def __init__(self, levelsize, pos, color):
+        pygame.sprite.DirtySprite.__init__(self)
+        self.image = pygame.Surface(levelsize).convert()
+        self.rect = pygame.Rect(pos, levelsize)
+        self.image.fill(color)
+        self.dirty = 2
+        self.levelsize = levelsize
         
+      
 
 class Room(pygame.sprite.Sprite):
     def __init__(self, w, h, x, y, block, fg, wg, num):
@@ -43,7 +53,10 @@ class Room(pygame.sprite.Sprite):
     def wall_collide(self, tiles, walls):
         pygame.sprite.groupcollide(walls, tiles, True, False)
         return tiles, walls
-        
+    
+    def dirty_sprite(self, group):
+        for i in group:
+            i.dirty = 1    
         
     # Here we make the rooms with floor tiles and wall tiles.
     def sprite_map(self, block):
@@ -55,11 +68,11 @@ class Room(pygame.sprite.Sprite):
         wx = (self.rect.left - (block))
         wy = (self.rect.top - (block))
         
-        room_tiles = pygame.sprite.Group()
-        wall_tiles = pygame.sprite.Group()
+        room_tiles = pygame.sprite.LayeredDirty()
+        wall_tiles = pygame.sprite.LayeredDirty()
         for part in xrange(col):
             for i in xrange(row):
-                i = Tile(surf, block, 3)
+                i = Tile(surf, block, 2)
                 i.rect.left = fx
                 i.rect.top = fy
                 room_tiles.add(i)
@@ -85,19 +98,19 @@ class Room(pygame.sprite.Sprite):
 
 
         
-class Tile(pygame.sprite.Sprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
+class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in every room or wall, and we chose which tile we want.
     def __init__(self, surf, blocksize, select):
-        pygame.sprite.Sprite.__init__(self)
+        pygame.sprite.DirtySprite.__init__(self)
         self.tile_select(blocksize, select)
-        self.dirty = 2
+        self.dirty = 1
         self.area = surf
     
     def tile_select(self, blocksize, select):
         if select == 1:
-            self.image = pygame.image.load("stone.jpg").convert()
+            self.image = pygame.image.load("wall_64.jpg").convert()
             self.rect = self.image.get_rect()
         if select == 2:
-            self.image = pygame.image.load("wood.jpg").convert()
+            self.image = pygame.image.load("wood_64.jpg").convert()
             self.rect = self.image.get_rect()
         if select == 3:
             self.image = pygame.image.load("blacktile.jpg").convert()

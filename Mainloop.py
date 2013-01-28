@@ -116,6 +116,7 @@ class Engine(object):
         for i in rooms:
             if sprite.rect.colliderect(i.rect) == True:
                 print i.number
+                i.dirty_sprite(i.tiles)
                 for wall in i.walls:
                     if sprite.rect.colliderect(wall.rect) == True:
                         if direction == "UP":
@@ -183,28 +184,75 @@ class Engine(object):
     
     # Using the mouse we scroll the map, without going away from the player.
     def map_scroll(self, mouse_pos, sw, sh, level_size, cp, blocksize, bx_pos, by_pos):
+        UP = False
+        DOWN = False
+        LEFT = False
+        RIGHT = False
+        
         if mouse_pos[0] >= (sw - (sw /8)):
             if (bx_pos + level_size[0])  >= sw + blocksize:
-                if cp[0] > blocksize: 
-                    bx_pos -= 5
+                if cp[0] > blocksize:
+                    LEFT = True
+                else:
+                    LEFT = False
+            else:
+                LEFT = False
+                    
 
         elif mouse_pos[0] <= (sw /8):
             if bx_pos  < -blocksize:
                 if cp[0] < (sw - blocksize):
-                    bx_pos += 5
+                    RIGHT = True
+                else:
+                    RIGHT = False
+            else:
+                RIGHT = False    
             
         elif mouse_pos[1] >= (sh - (sh /8)):
             if (by_pos + level_size[1])  >= sh + blocksize:
                 if cp[1] > blocksize:
-                    by_pos -= 5
+                    UP = True
+                else:
+                    UP = False
+            else: 
+                UP = False
           
         elif mouse_pos[1] <= (sh /8):
             if (by_pos)  < -blocksize:
                 if cp[1] < (sh - blocksize):
-                    by_pos += 5
-                    return bx_pos, by_pos
+                    DOWN = True
+                else:
+                    DOWN = False
+            else: DOWN = False
+        else:
+            UP = False
+            DOWN = False
+            RIGHT = False
+            LEFT = False
+        
+    
+        if LEFT == True:
+            bx_pos -= 50             
+        if RIGHT == True:
+            bx_pos += 50 
+        if UP == True:
+            by_pos -= 50
+        if DOWN == True:    
+            by_pos += 50  
+                  
         return bx_pos, by_pos
     
+    def set_rooms(self, rooms, player):
+        FirstRoom = rooms[0]
+        LastRoom = rooms[-1]
+        
+        f_room = []
+        for i in FirstRoom.tiles:
+            f_room.append((i.rect.x, i.rect.y))
+            
+        len_froom = len(f_room)
+        player.rect.x, player.rect.y = f_room[random.randint(0, len_froom)]
+        
     
     # A quick and simple level picker
     def next_level(self, playerrect, endzonerect):
@@ -224,7 +272,7 @@ class Engine(object):
     def generate_room(self, block, surf, fg, wg):
         run = True
         roomx, roomy = (block*2), (block*20)
-        hw = hh = rw = rh = 1000
+        hw = hh = rw = rh = 266
         rooms = []
         dir = [0, 0, 0, 0]
         room_number = 0

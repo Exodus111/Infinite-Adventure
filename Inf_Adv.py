@@ -21,18 +21,17 @@ class Game(Engine):
         Engine.__init__(self, size=(self.w, self.h), fill=(255, 255, 255))
         
         # Some colors, these will change.
-        self.blackColor = (0, 0, 0)
+        blackColor = (0, 0, 0)
         white_color = (255, 255, 255)
-        self.sgidarkgray = (85, 85, 85)
-        self.yellowColor = (255, 255, 0)
+        sgidarkgray = (85, 85, 85)
+        yellowColor = (255, 255, 0)
+        
         
         # Setting up some class variables for the game map, (background surface).
-        self.level_size = (4800, 4800)
-        self.background = pygame.Surface(self.level_size).convert()
-        self.bx_pos, self.by_pos = (0,0)
-        self.cp = (0,0)
-        self.background.fill(white_color)      
-        self.blocksize = 32
+        self.blocksize = 64
+        self.background = GameSurface((8000, 8000), (0, 0), blackColor)
+        self.bg = pygame.sprite.LayeredDirty(self.background)
+        
       
         # Here we quickly set up an image file for the mouse cursor (making sure to convert it and keep transparency)
         self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
@@ -42,34 +41,38 @@ class Game(Engine):
         self.player = Player()
         self.player.rect.center = (500, 900)
         
-        npcrect = pygame.Rect(500, 200, 32, 32)
-        npcimage = pygame.image.load("Greendot.png").convert_alpha()
-        self.npc1 = NPC(npcimage, npcrect, 10)
+        #npcrect = pygame.Rect(500, 200, 32, 32)
+        #npcimage = pygame.image.load("Greendot.png").convert_alpha()
+        #self.npc1 = NPC(npcimage, npcrect, 10)
         
        
         
-        
-        fgroup = pygame.sprite.Group()
-        wgroup = pygame.sprite.Group()
+        self.screen_rect = pygame.Rect(0, 0, (self.w*2), (self.h*2))
+        fgroup = pygame.sprite.LayeredDirty()
+        wgroup = pygame.sprite.LayeredDirty()
         
         #self.rooms = Room((self.blocksize*20), (self.blocksize*20), 50, 50, self.blocksize, fgroup, wgroup)
-        self.rooms = self.generate_room(self.blocksize, self.level_size, fgroup, wgroup)
-        
+        self.rooms = self.generate_room(self.blocksize, self.background.levelsize, fgroup, wgroup)
         pygame.sprite.groupcollide(wgroup, fgroup, True, False)
-        self.allsprites = pygame.sprite.LayeredUpdates(wgroup, fgroup)
         
+        self.set_rooms(self.rooms, self.player)
+        self.allsprites = pygame.sprite.LayeredDirty(wgroup, fgroup)
+        self.cp = (0,0)
         
         self.playerimg = self.player.image
+        self.allsprites.add(self.player)
         
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
     def update(self):
+        self.screen_rect.center = self.player.rect.center
+        # Here we scroll the map using the mouse pointer.
+        self.background.rect.x, self.background.rect.y = self.map_scroll(self.mouse_pos, self.w, self.h, self.background.levelsize, self.cp, self.blocksize, self.background.rect.x, self.background.rect.y)
         
        
         
         # Movement for the player.
         self.player_move(self.player.dir, self.cp, (self.w, self.h), self.rooms, self.player, self.player.speed)
-        self.allsprites.add(self.player)
         
         # Temp out of drift: self.npc_track(self.player.rect, self.walls, self.npc1.npcmove, self.npc1.rect, self.npc1.speed)
     
@@ -77,13 +80,13 @@ class Game(Engine):
     # Its called in the engines mainloop, but must be run in this file.            
     def draw(self):
         
-        
-        
-        
+        self.allsprites.set_clip(self.screen_rect)
         self.allsprites.update()
-        self.allsprites.draw(self.background) # Here we draw the map onto the background surface.
-        self.screen.blit(self.background, (self.bx_pos, self.by_pos))
+        self.allsprites.draw(self.background.image) # Here we draw the map onto the background surface.
+        self.bg.draw(self.screen)
         self.screen.blit(self.mouse_image, self.mouse_pos) # Here we draw the mouse pointer image to the screen (NOT the background)
+        
+        
         pygame.display.update()
         
         #Temp out of order  self.background.blit(self.npc1.image, (self.npc1.rect.x, self.npc1.rect.y))  
@@ -124,13 +127,11 @@ class Game(Engine):
     def mouse_motion(self, buttons, pos, rel):
         self.mouse_pos = pos
         
-        # Here we scroll the map using the mouse pointer.
-        self.bx_pos, self.by_pos = self.map_scroll(self.mouse_pos, self.w, self.h, self.level_size, self.cp, self.blocksize, self.bx_pos, self.by_pos)
-        # Here we call the method to rotate the mouse.
-        self.cp = self.find_player(self.player.rect.x, self.player.rect.y, self.bx_pos, self.by_pos)
+       # Here we call the method to rotate the mouse.
+        self.cp = self.find_player(self.player.rect.x, self.player.rect.y, self.background.rect.x, self.background.rect.y)
         self.player.rot = self.rotate((self.cp[0], self.cp[1]), self.mouse_pos)
         self.player.image = self.rotate_image(self.playerimg, (self.player.rot))
                   
 # This runs the game once we run this file. The number is fps.            
 s = Game()
-s.main_loop(60)
+s.main_loop(30)
