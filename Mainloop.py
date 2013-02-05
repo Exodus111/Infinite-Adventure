@@ -17,9 +17,12 @@ class Engine(object):
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
         pygame.mouse.set_visible(False)      
-        self.screen = pygame.display.set_mode(size, DOUBLEBUF|HWSURFACE)
+        self.screen = pygame.display.set_mode(size)
         self.clock = pygame.time.Clock()
         self.running = False
+        self.start = True
+        self.surf_dir = [False, False, False, False]
+        self.temp_pos = (0,0)
         
      
 # The Event handler fires off in case of events and runs the appropriate function.        
@@ -115,7 +118,6 @@ class Engine(object):
         
         for i in rooms:
             if sprite.rect.colliderect(i.rect) == True:
-                print i.number
                 i.dirty_sprite(i.tiles)
                 for wall in i.walls:
                     if sprite.rect.colliderect(wall.rect) == True:
@@ -127,132 +129,138 @@ class Engine(object):
                             sprite.rect.bottom = wall.rect.top
                         if direction == "RIGHT":
                             sprite.rect.right = wall.rect.left
-                      
-        
-       
                     
+   
+    def limit_rooms(self, rooms, screen):
+        self.r_rooms = []
+        for i in rooms:
+            if screen.colliderect(i.rect):
+                sprites = []
+                for wall in i.walls:
+                    sprites.append(wall)
+                for floor in i.tiles:
+                    sprites.append(floor)
+                for sprite in sprites:
+                    if screen.colliderect(sprite.rect):
+                        self.r_rooms.append(sprite)
+
+    def limit_mobs(self, screen, mobs):
+        l_mobs = []
+        for mob in mobs:
+            if screen.colliderect(mob.rect):
+                l_mobs.append(mob)
+        return l_mobs                
+    
+    def add_rooms(self):
+        all = pygame.sprite.LayeredDirty()
+        for sprite in self.r_rooms:
+            all.add(sprite)
+        return all    
+                   
     # We are using two surfaces, one for the screen and one for the map (so I can scroll the game)
         # So I needed a method to find the location of an object on the background surface to the screen surface.
         # px, py are coords for the object on the surface, and mx, my are the coords for the surface location on the screen.
-    def find_player(self, px, py, mx, my):
-        
-        if mx >= 0:
-            player_x =  ((px - px) - mx) + px
-        elif mx < 0:
-            player_x = ((px - px) + mx) + px
-        if my >= 0:
-            player_y = ((py - py) - my) + py
-        elif my < 0:
-            player_y = ((py - py) + my) + py
-            
-        return (player_x, player_y)
-   
-   # Here the NPC will track its target. (Usually the player) 
-    def npc_track(self, target, walls, npcmove, rect, speed):
-        if rect.x + 500 > target.x:
-            if rect.x - 500 < target.x:
-                if rect.y + 500 > target.y:
-                    if rect.y - 500 < target.y:
-                        if rect.y > target.y:
-                            npcmove[0] = 1 #UP
-                            npcmove[2] = 0
-                        elif rect.y < target.y:
-                            npcmove[2] = 1 #DOWN
-                            npcmove[0] = 0
-                        if rect.x > target.x:
-                            npcmove[1] = 1 #LEFT
-                            npcmove[3] = 0
-                        elif rect.x < target.x:
-                            npcmove[3] = 1 #RIGHT
-                            npcmove[1] = 0
-                        self.npc_movement(walls, npcmove, rect, speed)
-     
-     # movement for the NPC with collision detection.                   
-    def npc_movement(self, walls, npcmove, rect, speed):
-        if npcmove[0] == 1:
-            rect.y -= speed
-            self.collision(walls, rect, "UP")
-        if npcmove[1] == 1:
-            rect.x -= speed
-            self.collision(walls, rect, "LEFT")
-        if npcmove[2] == 1:
-            rect.y += speed
-            self.collision(walls, rect, "DOWN")
-        if npcmove[3] == 1:
-            rect.x += speed
-            self.collision(walls, rect, "RIGHT")
+    def find_position(self, px, py, mx, my):
     
-    # Using the mouse we scroll the map, without going away from the player.
-    def map_scroll(self, mouse_pos, sw, sh, level_size, cp, blocksize, bx_pos, by_pos):
-        UP = False
-        DOWN = False
-        LEFT = False
-        RIGHT = False
-        
-        if mouse_pos[0] >= (sw - (sw /8)):
-            if (bx_pos + level_size[0])  >= sw + blocksize:
-                if cp[0] > blocksize:
-                    LEFT = True
-                else:
-                    LEFT = False
-            else:
-                LEFT = False
-                    
+        pos_x = px + mx
+        pos_y = py + my
 
-        elif mouse_pos[0] <= (sw /8):
-            if bx_pos  < -blocksize:
-                if cp[0] < (sw - blocksize):
-                    RIGHT = True
-                else:
-                    RIGHT = False
-            else:
-                RIGHT = False    
+        return pos_x, pos_y
+   
+
+    # Using the mouse we scroll the map, without going away from the player.
+    def map_scroll(self, mouse_pos, sw, sh):
+
+ 
+        if mouse_pos[0] >= (sw - (sw /8)):#Moving Right
+            self.surf_dir[1] = True
             
-        elif mouse_pos[1] >= (sh - (sh /8)):
-            if (by_pos + level_size[1])  >= sh + blocksize:
-                if cp[1] > blocksize:
-                    UP = True
-                else:
-                    UP = False
-            else: 
-                UP = False
-          
-        elif mouse_pos[1] <= (sh /8):
-            if (by_pos)  < -blocksize:
-                if cp[1] < (sh - blocksize):
-                    DOWN = True
-                else:
-                    DOWN = False
-            else: DOWN = False
-        else:
-            UP = False
-            DOWN = False
-            RIGHT = False
-            LEFT = False
+        elif mouse_pos[0] <= (sw /8):#Moving Left
+            self.surf_dir[3] = True
+         
+        elif mouse_pos[1] >= (sh - (sh /8)):#Moving Down
+            self.surf_dir[0] = True
+            
+        elif mouse_pos[1] <= (sh /8):#Moving Up
+            self.surf_dir[2] = True
         
+        else:
+            self.center_map()
+
+
+    def center_map(self):
+        self.surf_dir = [False, False, False, False]
+
+
+            
+
+    def map_move(self, surf, cp, sw, sh):
+
+        if self.surf_dir[1] == True:
+            if surf.rect.x > (-surf.levelsize[0] + sw):
+                if 0 < cp.x:
+                    surf.rect.move_ip(-15, 0) #Moving Right
+            elif surf.rect.x < (-surf.levelsize[0] + sw):
+                surf.rect.x = (-surf.levelsize[0] + sw)
+
+        if self.surf_dir[3] == True:
+            if surf.rect.x < 0:
+                if sw > cp.x:
+                    surf.rect.move_ip(15, 0) #Moving Left
+            elif surf.rect.x > 0:
+                surf.rect.x = 0
+
+        if self.surf_dir[0] == True:
+            if surf.rect.y > (-surf.levelsize[1] + sh):
+                if 0 < cp.y:
+                    surf.rect.move_ip(0, -15) #Moving Down
+                elif surf.rect.y < (-surf.levelsize[1] + sh):
+                    surf.rect.y = (-surf.levelsize[1] + sh)
+        if self.surf_dir[2] == True:
+            if surf.rect.y < 0:
+                if sh > cp.y:
+                    surf.rect.move_ip(0, 15) #Moving Up
+            elif surf.rect.y > 0:
+                surf.rect.y = 0
+            
+            
     
-        if LEFT == True:
-            bx_pos -= 50             
-        if RIGHT == True:
-            bx_pos += 50 
-        if UP == True:
-            by_pos -= 50
-        if DOWN == True:    
-            by_pos += 50  
-                  
-        return bx_pos, by_pos
-    
-    def set_rooms(self, rooms, player):
+    def set_rooms(self, rooms, player, bx, by, cp, w, h):
         FirstRoom = rooms[0]
         LastRoom = rooms[-1]
         
         f_room = []
         for i in FirstRoom.tiles:
-            f_room.append((i.rect.x, i.rect.y))
+            f_room.append((i.rect.centerx, i.rect.centery))
             
         len_froom = len(f_room)
-        player.rect.x, player.rect.y = f_room[random.randint(0, len_froom)]
-        
+        player.rect.centerx, player.rect.centery = f_room[random.randint(0, len_froom)]
+        cp.centerx, cp.centery = self.find_position(player.rect.x, player.rect.y, bx, by)
+
+        bx = (w/2) - cp.x
+        by = (h/2) - cp.y
+
+        return bx, by
+
+
+    def add_mobs(self, num, rooms):
+        mobslist = pygame.sprite.LayeredDirty()
+        for i in rooms:
+            if i == rooms[0]:
+                pass
+            elif i.ident == "ROOM":
+                temp = self.generate_mobs(num, i.rect)
+                mobslist.add(temp)
+        return mobslist
+
+    def generate_mobs(self, num, rect):
+        mobgroup = []
+        for i in xrange(num):
+            i = Mob()
+            i.select(random.randint(1, 6))
+            i.rect.center = (random.randint(rect.left, rect.left + rect.width), random.randint(rect.top, rect.top + rect.height))
+            mobgroup.append(i)
+        return mobgroup
     
     # A quick and simple level picker
     def next_level(self, playerrect, endzonerect):
@@ -269,7 +277,9 @@ class Engine(object):
         return floor, walls
     
      # Generates a room rectangle of random size, and ties the other rects together.      
-    def generate_room(self, block, surf, fg, wg):
+    def generate_room(self, block, surf):
+        fg = pygame.sprite.LayeredDirty()
+        wg = pygame.sprite.LayeredDirty()
         run = True
         roomx, roomy = (block*2), (block*20)
         hw = hh = rw = rh = 266
@@ -278,8 +288,8 @@ class Engine(object):
         room_number = 0
         while run:
            
-           hw = random.randrange((block*8), (block*16), block)
-           hh = random.randrange((block*8), (block*16), block)
+           hw = random.randrange((block*10), (block*20), block)
+           hh = random.randrange((block*10), (block*20), block)
            
            hew = random.randrange((rw - rw),(rw - (block*4)), block)
            heh = random.randrange((rh - rh), (rh - (block*4)), block)
@@ -302,11 +312,11 @@ class Engine(object):
                roomx += hw
          
            if rooms != []:
-               hall = Room(hw, hh, roomx, roomy, block, fg, wg, room_number)
+               hall = Room(hw, hh, roomx, roomy, block, fg, wg, room_number, "HALL")
                rooms.append(hall)
            
-           rw = random.randrange((block*16), (block*40), block)
-           rh = random.randrange((block*16), (block*40), block)
+           rw = random.randrange((block*10), (block*28), block)
+           rh = random.randrange((block*10), (block*28), block)
            
            hew = random.randrange((rw - rw),(rw - (block*4)), block)
            heh = random.randrange((rh - rh), (rh - (block*4)), block)
@@ -325,11 +335,12 @@ class Engine(object):
                roomx -= hew
            
            room_number += 1     
-           room = Room(rw, rh, roomx, roomy, block, fg, wg, room_number)
+           room = Room(rw, rh, roomx, roomy, block, fg, wg, room_number, "ROOM")
            rooms.append(room)
            
            roomx, roomy, dir, run = self.direction(room.rect, rooms, block, run, surf)
-           
+        
+        pygame.sprite.groupcollide(wg, fg, True, False)
         return rooms
     
     def direction(self, rect, rooms, block, run, surf): #This methods checks each direction to see if there is space for another room there.
@@ -423,7 +434,7 @@ class Engine(object):
                                 down = False
             
         return right, left, up, down
-    
+
     
     
     def collision_list(self, walls, floors):

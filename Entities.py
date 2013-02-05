@@ -3,30 +3,143 @@ Created on Jan 19, 2013
 
 @author: aurelio
 '''
-import pygame
+import pygame, random
 from pygame.locals import *
+from vec2d import vec2d
+import Mainloop
 
 class Player(pygame.sprite.DirtySprite):  
     # Here I load up the player, and the variables necessary for movement and rotation.
     def __init__(self):
         pygame.sprite.DirtySprite.__init__(self)
-        self.rect = pygame.Rect(132, 132, 38, 38)
-        self.image = pygame.image.load("Arrow_cursor.png").convert_alpha()
+        self.image = pygame.image.load("player.png").convert_alpha()
+        self.rect = self.image.get_rect()
         self.dirty = 1
-        self.rot = 90
+        self.rot = 0
         self.speed = 15
         self.dir = [0, 0, 0, 0]
+        self.ident = "Player"
                 
                 
 
-class NPC(pygame.sprite.Sprite):
-    def __init__(self, image, rect, speed):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = image
-        self.rect = rect
+class Mob(pygame.sprite.DirtySprite):
+    def __init__(self):
+        pygame.sprite.DirtySprite.__init__(self)
         self.dirty = 1
-        self.speed = speed
         self.npcmove = [0, 0, 0, 0]
+        self.ident = "Mob"
+        self.target = vec2d(0,0)
+        self.room = 0
+
+    def select(self, num):
+        if num == 1:
+            self.image = pygame.image.load("mob_green.png").convert_alpha()
+            self.rect = self.image.get_rect()
+            self.speed = 10
+            self.num = num
+            self.pos = vec2d(self.rect.x, self.rect.y)
+        elif num == 2:
+            self.image = pygame.image.load("mob_red.png").convert_alpha()
+            self.rect = self.image.get_rect()
+            self.speed = 10
+            self.num = num
+            self.pos = vec2d(self.rect.x, self.rect.y)
+        elif num == 3:
+            self.image = pygame.image.load("mob_yellow.png").convert_alpha()
+            self.rect = self.image.get_rect()
+            self.speed = 10
+            self.num = num
+            self.pos = vec2d(self.rect.x, self.rect.y)
+        elif num == 4:
+            self.image = pygame.image.load("mob_orange.png").convert_alpha()
+            self.rect = self.image.get_rect()
+            self.speed = 10
+            self.num = num
+            self.pos = vec2d(self.rect.x, self.rect.y)
+        elif num == 5:
+            self.image = pygame.image.load("mob_pink.png").convert_alpha()
+            self.rect = self.image.get_rect()
+            self.speed = 15
+            self.num = num
+            self.pos = vec2d(self.rect.x, self.rect.y)
+        elif num == 6:
+            self.image = pygame.image.load("mob_white.png").convert_alpha()
+            self.rect = self.image.get_rect()
+            self.speed = 20
+            self.num = num
+            self.pos = vec2d(self.rect.x, self.rect.y)
+
+
+    def run(self, walls, target):
+        self.patrol()
+        #self.track(target)
+        self.movement(walls)
+
+    def patrol(self):
+        if self.room != 0:
+            self.target = vec2d(random.randint(self.room.rect.left, self.room.rect.right), 
+                random.randint(self.room.rect.top, self.room.rect.bottom))
+            dir = self.target - self.pos
+            if dir.length > 3:
+                dir.length = 5
+                self.pos = self.pos + dir
+
+        
+
+          # Here the NPC will track its target. (Usually the player) 
+    def track(self, target):
+        if self.rect.x + 500 > target.rect.x:
+            if self.rect.x - 500 < target.rect.x:
+                if self.rect.y + 500 > target.rect.y:
+                    if self.rect.y - 500 < target.rect.y:
+                        if self.rect.y > target.rect.y:
+                            self.npcmove[0] = 1 #UP
+                            self.npcmove[2] = 0
+                        elif self.rect.y < target.rect.y:
+                            self.npcmove[2] = 1 #DOWN
+                            self.npcmove[0] = 0
+                        if self.rect.x > target.rect.x:
+                            self.npcmove[1] = 1 #LEFT
+                            self.npcmove[3] = 0
+                        elif self.rect.x < target.rect.x:
+                            self.npcmove[3] = 1 #RIGHT
+                            self.npcmove[1] = 0
+
+
+     # movement for the NPC with collision detection.                   
+    def movement(self, walls):
+        if self.npcmove[0] == 1:
+            self.rect.y -= self.speed
+            self.collision(walls, "UP")
+        if self.npcmove[1] == 1:
+            self.rect.x -= self.speed
+            self.collision(walls, "LEFT")
+        if self.npcmove[2] == 1:
+            self.rect.y += self.speed
+            self.collision(walls, "DOWN")
+        if self.npcmove[3] == 1:
+            self.rect.x += self.speed
+            self.collision(walls, "RIGHT")
+
+    # Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
+# the rect object to check and a string for collision.
+    def collision(self, rooms, direction):
+        
+        for i in rooms:
+            if self.rect.colliderect(i.rect) == True:
+                self.room = i
+                i.dirty_sprite(i.tiles)
+                for wall in i.walls:
+                    if self.rect.colliderect(wall.rect) == True:
+                        if direction == "UP":
+                            self.rect.top = wall.rect.bottom
+                        if direction == "LEFT":
+                            self.rect.left = wall.rect.right
+                        if direction == "DOWN":
+                            self.rect.bottom = wall.rect.top
+                        if direction == "RIGHT":
+                            self.rect.right = wall.rect.left
+
 
 class GameSurface(pygame.sprite.DirtySprite):
     def __init__(self, levelsize, pos, color):
@@ -34,16 +147,17 @@ class GameSurface(pygame.sprite.DirtySprite):
         self.image = pygame.Surface(levelsize).convert()
         self.rect = pygame.Rect(pos, levelsize)
         self.image.fill(color)
-        self.dirty = 2
+        self.dirty = 1
         self.levelsize = levelsize
         
       
 
 class Room(pygame.sprite.Sprite):
-    def __init__(self, w, h, x, y, block, fg, wg, num):
+    def __init__(self, w, h, x, y, block, fg, wg, num, ident):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((w, h))
         self.rect = pygame.Rect(x, y, w, h)
+        self.ident = ident
         self.number = num
         tiles, walls = self.sprite_map(block)
         self.tiles, self.walls = self.wall_collide(tiles, walls)
@@ -72,7 +186,7 @@ class Room(pygame.sprite.Sprite):
         wall_tiles = pygame.sprite.LayeredDirty()
         for part in xrange(col):
             for i in xrange(row):
-                i = Tile(surf, block, 2)
+                i = Tile(surf, block, 3)
                 i.rect.left = fx
                 i.rect.top = fy
                 room_tiles.add(i)
@@ -107,7 +221,7 @@ class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in e
     
     def tile_select(self, blocksize, select):
         if select == 1:
-            self.image = pygame.image.load("wall_64.jpg").convert()
+            self.image = pygame.image.load("stone.jpg").convert()
             self.rect = self.image.get_rect()
         if select == 2:
             self.image = pygame.image.load("wood_64.jpg").convert()
