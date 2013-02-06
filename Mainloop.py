@@ -9,6 +9,7 @@ Created on Dec 29, 2012
 
 import pygame, math, sys, os, random
 from pygame.locals import *
+from vec2d import vec2d
 from Entities import *
 
 # First we intialize pygame and set up a few class variables.
@@ -246,6 +247,7 @@ class Engine(object):
     def add_mobs(self, num, rooms):
         mobslist = pygame.sprite.LayeredDirty()
         for i in rooms:
+            print i.ident
             if i == rooms[0]:
                 pass
             elif i.ident == "ROOM":
@@ -258,7 +260,8 @@ class Engine(object):
         for i in xrange(num):
             i = Mob()
             i.select(random.randint(1, 6))
-            i.rect.center = (random.randint(rect.left, rect.left + rect.width), random.randint(rect.top, rect.top + rect.height))
+            i.rect.center = (random.randint((rect.left + 1), (rect.right - 1))), (random.randint((rect.top + 1), (rect.bottom - 1)))
+            i.pos = vec2d(i.rect.centerx, i.rect.centery)
             mobgroup.append(i)
         return mobgroup
     
@@ -267,14 +270,10 @@ class Engine(object):
         if playerrect.colliderect(endzonerect) == True:
             self.lvlnum += 1 
             self.generate = True
+
     
     # Below this line we start making the map:
     
-    def test_room(self, block):
-        testRoom = pygame.Rect(block, block, (block*20), (block*20))
-        floor, walls = self.sprite_map(testRoom, block)
-        
-        return floor, walls
     
      # Generates a room rectangle of random size, and ties the other rects together.      
     def generate_room(self, block, surf):

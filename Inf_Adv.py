@@ -12,6 +12,7 @@ from pygame.locals import *
 from Mainloop import *
 from Entities import *
 
+fps = 60
 # This is the main class of the game, it inherits from the "engine" class, the __init__ method loads most of the game assets. 
 class Game(Engine):
     def __init__(self):
@@ -25,6 +26,7 @@ class Game(Engine):
         white_color = (255, 255, 255)
         sgidarkgray = (85, 85, 85)
         yellowColor = (255, 255, 0)
+        self.time_passed = self.clock.get_fps()
         
         
         # Setting up some class variables for the game map, (background surface).
@@ -77,23 +79,22 @@ class Game(Engine):
         # Here we scroll the map using the mouse pointer.
         self.map_move(self.background, self.cp, self.w, self.h) 
 
-        for i in self.mobs:
-            i.dirty = 1
-            i.run(self.rooms, self.player)
+        for mob in self.l_mobs:
+            mob.run(self.rooms, self.time_passed)
 
     # The draw function. This is where things are actually drawn to screen.
-    # Its called in the engines mainloop, but must be run in this file.            
+    # Its called in the engines mainloop, but must be run in this file.           
     def draw(self):
         
         # Here we clip to the clipping rectangle.
         
-        # self.allsprites.set_clip(self.screen_rect)
+        self.allsprites.set_clip(self.screen_rect)
         self.allsprites.update()
 
-        self.allsprites.draw(self.background.image) # Here we draw the map onto the background surface.
+        self.allsprites.draw(self.background.image) #Here we draw the map onto the background surface.
         pygame.draw.rect(self.background.image, (255, 255, 255), self.screen_rect, -1)
         self.bg.draw(self.screen)
-        self.screen.blit(self.mouse_image, self.mouse_pos) # Here we draw the mouse pointer image to the screen (NOT the background)
+        self.screen.blit(self.mouse_image, self.mouse_pos) #Here we draw the mouse pointer image to the screen (NOT the background)
         pygame.display.update()
 
     # An event method giving us all key down presses.
@@ -140,4 +141,4 @@ class Game(Engine):
                   
 # This runs the game once we run this file. The number is fps.            
 s = Game()
-s.main_loop(30)
+s.main_loop(fps)
