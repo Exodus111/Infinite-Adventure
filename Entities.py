@@ -8,144 +8,224 @@ from pygame.locals import *
 from vec2d import vec2d
 import Mainloop
 
-class Player(pygame.sprite.DirtySprite):  
-    # Here I load up the player, and the variables necessary for movement and rotation.
+class Entity(pygame.sprite.DirtySprite):
     def __init__(self):
         pygame.sprite.DirtySprite.__init__(self)
+        self.dirty = 1
+        self.rooms = "rooms"
+
+
+    def movement(self):
+        pass
+
+    def set_collide(self, rooms):
+        self.rooms = rooms
+
+    def collision(self, sprite, direction):
+        
+        for i in self.rooms:
+            if sprite.rect.colliderect(i.rect) == True:
+                i.dirty_sprite(i.tiles)
+                for wall in i.walls:
+                    if sprite.rect.colliderect(wall.rect) == True:
+                        if direction == "UP":
+                            sprite.rect.top = wall.rect.bottom
+                        if direction == "LEFT":
+                            sprite.rect.left = wall.rect.right
+                        if direction == "DOWN":
+                            sprite.rect.bottom = wall.rect.top
+                        if direction == "RIGHT":
+                            sprite.rect.right = wall.rect.left
+
+class Player(Entity):  
+    # Here I load up the player, and the variables necessary for movement and rotation.
+    def __init__(self):
+        Entity.__init__(self)
         self.image = pygame.image.load("player.png").convert_alpha()
+        self.base_img = self.image
         self.rect = self.image.get_rect()
         self.dirty = 1
         self.rot = 0
         self.speed = 15
         self.dir = [0, 0, 0, 0]
         self.ident = "Player"
+        self.level = 1
+
+    # Movement and collision detection calls for the player 
+    def move(self, dir, screenpos, screensize):
+        if dir[0] == 1:
+            if screenpos[1] > (screensize[1]/50):    
+                self.rect.y -= self.speed
+                self.collision(self, "UP")
+        if dir[1] == 1:
+            if screenpos[0] > (screensize[0]/50):
+                self.rect.x -= self.speed
+                self.collision(self, "LEFT")
+        if dir[2] == 1:
+            if screenpos[1] < (screensize[1] - (screensize[1]/50)):
+                self.rect.y += self.speed
+                self.collision(self, "DOWN")
+        if dir[3] == 1:
+            if screenpos[0] < (screensize[0] - (screensize[0]/50)):
+                self.rect.x += self.speed
+                self.collision(self, "RIGHT")
                 
                 
 
-class Mob(pygame.sprite.DirtySprite):
-    def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self)
+class Mob(Entity):
+    def __init__(self, init_pos, init_dir):
+        Entity.__init__(self)
         self.dirty = 1
         self.npcmove = [0, 0, 0, 0]
         self.ident = "Mob"
-        self.target = vec2d(0,0)
-        self.pos = vec2d(0,0)
+        self.pos = vec2d(init_pos)
+        self.pos_old = self.pos
+        self.dir = vec2d(init_dir).normalized()
         self.room = 0
         self.walls = None
         self.npcmove = [0,0,0,0]
         self.counter = 0
-        self.dir = 0
+        self.hp = 100
+        
 
     def select(self, num):
         if num == 1:
             self.image = pygame.image.load("mob_green.png").convert_alpha()
+            self.base_image = self.image
             self.rect = self.image.get_rect()
-            self.speed = 10
+            self.rect.center = self.pos.inttup()
+            self.speed = 3
             self.num = num
+            self.rotate_img()
         elif num == 2:
             self.image = pygame.image.load("mob_red.png").convert_alpha()
+            self.base_image = self.image
             self.rect = self.image.get_rect()
-            self.speed = 10
+            self.rect.center = self.pos.inttup()
+            self.speed = 3
             self.num = num
+            self.rotate_img()
         elif num == 3:
             self.image = pygame.image.load("mob_yellow.png").convert_alpha()
+            self.base_image = self.image
             self.rect = self.image.get_rect()
-            self.speed = 10
+            self.rect.center = self.pos.inttup()
+            self.speed = 3
             self.num = num
+            self.rotate_img()
         elif num == 4:
             self.image = pygame.image.load("mob_orange.png").convert_alpha()
+            self.base_image = self.image
             self.rect = self.image.get_rect()
-            self.speed = 10
+            self.rect.center = self.pos.inttup()
+            self.speed = 3
             self.num = num
+            self.rotate_img()
         elif num == 5:
             self.image = pygame.image.load("mob_pink.png").convert_alpha()
+            self.base_image = self.image
             self.rect = self.image.get_rect()
-            self.speed = 15
+            self.rect.center = self.pos.inttup()
+            self.speed = 5
             self.num = num
+            self.rotate_img()
         elif num == 6:
             self.image = pygame.image.load("mob_white.png").convert_alpha()
+            self.base_image = self.image
             self.rect = self.image.get_rect()
-            self.speed = 20
+            self.rect.center = self.pos.inttup()
+            self.speed = 5
             self.num = num
+            self.rotate_img()
 
-    def move(self, rooms):
+    def damage(self, dmg):
+        min_d = int(dmg[0])
+        max_d = int(dmg[1])
+        dmg_taken = random.randint(min_d, max_d)
+        self.hp -= dmg_taken
+
+
+    def move(self):
+        self.rect.center = self.pos.inttup()
+
+    def run(self, rooms, mobs):
+        self.dirty = 1
+        if self.hp <= 0:
+            self.kill()
         for room in rooms:
             if self.rect.colliderect(room.rect):
                 self.room = room
-        self.rect.centerx, self.rect.centery = self.pos[0], self.pos[1]
-
-    def run(self, rooms, time):
-        self.dirty = 1
-        self.patrol(time)
+        self.patrol()
+        self.collide()
+        self.move()
         #self.track()
-        self.move(rooms)
-
-    def patrol(self, time):
-
-        if self.room != 0:
-            self.counter += time
-            if self.counter > random.randint(400, 500):
-                self.target = vec2d(random.randint(self.room.rect.left, self.room.rect.right), 
-                    random.randint(self.room.rect.top, self.room.rect.bottom))
-                self.dir = self.target - self.pos
-                if self.dir.length > 3:
-                    self.dir.length = 5
-                self.counter = 0
+        self.collide_other(mobs)
         
-            self.pos += self.dir
 
-          # Here the NPC will track its target. (Usually the player) 
+    def collide(self):
+        for wall in self.room.walls:
+            if self.rect.colliderect(wall):
+                shove = vec2d(wall.rect.center) - self.pos
+                shove.length = self.speed
+                self.pos -= shove
+                self.dir.x *= -1
+                self.dir.y *= -1
+                self.rotate_img()
+
+    def collide_other(self, mobs):
+        for mob in mobs:
+            for mob2 in mobs:
+                if mob != mob2:
+                    dist = mob.pos.get_distance(mob2.pos)
+                    if dist < 32:
+                        overlap = 32 - dist
+                        shove = mob2.pos - mob.pos
+                        shove.length = overlap/2
+                        mob2.pos += shove
+                        mob.pos -= shove
+
+    def rotate(self, angle):
+        self.dir.rotate(angle)
+        self.rotate_img()
+
+    def rotate_img(self):
+        self.image = pygame.transform.rotate(self.base_image, -self.dir.angle)
+
+    def patrol(self):
+        if self.room != 0:
+            move = vec2d(self.dir.x * self.speed * 60, self.dir.y * self.speed * 60)
+            if move.length > self.speed:
+                move.length = self.speed
+            self.pos += move
+            self.counter += 5
+            if self.counter > random.randint(600, 1000):
+                angle = 45 * random.randint(-4, 4)
+                self.rotate(angle)
+                self.counter = 0
+                
+    # Here the NPC will track its target. (Usually the player) 
     def track(self, target):
         if self.rect.x + 500 > target.rect.x:
             if self.rect.x - 500 < target.rect.x:
                 if self.rect.y + 500 > target.rect.y:
                     if self.rect.y - 500 < target.rect.y:
-                        if self.rect.y > target.rect.y:
-                            self.npcmove[0] = 1 #UP
-                            self.npcmove[2] = 0
-                        elif self.rect.y < target.rect.y:
-                            self.npcmove[2] = 1 #DOWN
-                            self.npcmove[0] = 0
-                        if self.rect.x > target.rect.x:
-                            self.npcmove[1] = 1 #LEFT
-                            self.npcmove[3] = 0
-                        elif self.rect.x < target.rect.x:
-                            self.npcmove[3] = 1 #RIGHT
-                            self.npcmove[1] = 0
+                        pass
 
 
      # movement for the NPC with collision detection.                   
-    def movement(self, walls):
+    def movement(self):
         if self.npcmove[0] == 1:
             self.rect.y -= self.speed
-            self.collision(walls, "UP")
+            self.collision(self.rect, "UP")
         if self.npcmove[1] == 1:
             self.rect.x -= self.speed
-            self.collision(walls, "LEFT")
+            self.collision(self.rect, "LEFT")
         if self.npcmove[2] == 1:
             self.rect.y += self.speed
-            self.collision(walls, "DOWN")
+            self.collision(self.rect, "DOWN")
         if self.npcmove[3] == 1:
             self.rect.x += self.speed
-            self.collision(walls, "RIGHT")
-
-    # Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
-# the rect object to check and a string for collision.
-    def collision(self, rooms, direction):
-        
-        for i in rooms:
-            if self.rect.colliderect(i.rect) == True:
-                self.room = i
-                for wall in i.walls:
-                    if self.rect.colliderect(wall.rect) == True:
-                        if direction == "UP":
-                            self.rect.top = wall.rect.bottom
-                        if direction == "LEFT":
-                            self.rect.left = wall.rect.right
-                        if direction == "DOWN":
-                            self.rect.bottom = wall.rect.top
-                        if direction == "RIGHT":
-                            self.rect.right = wall.rect.left
+            self.collision(self.rect, "RIGHT")
 
 
 class GameSurface(pygame.sprite.DirtySprite):

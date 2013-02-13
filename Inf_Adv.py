@@ -11,6 +11,8 @@ import pygame
 from pygame.locals import *
 from Mainloop import *
 from Entities import *
+from Powers import *
+from MagicEffects import *
 
 fps = 60
 # This is the main class of the game, it inherits from the "engine" class, the __init__ method loads most of the game assets. 
@@ -37,6 +39,8 @@ class Game(Engine):
       
         # Here we quickly set up an image file for the mouse cursor (making sure to convert it and keep transparency)
         self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
+        self.mouse_rect = self.mouse_image.get_rect()
+
         self.mouse_pos = (0, 0)
         
         # Here I load up the player, and the variables necessary for movement and rotation.
@@ -45,7 +49,7 @@ class Game(Engine):
         
         
         self.rooms = self.generate_room(self.blocksize, self.background.levelsize)
-       
+        self.player.set_collide(self.rooms)
         
         
         self.cp = pygame.Rect(0, 0, self.player.rect.width, self.player.rect.height)
@@ -57,21 +61,28 @@ class Game(Engine):
         self.mobs = self.add_mobs(5, self.rooms)
         self.l_mobs = []
         self.playerimg = self.player.image
-    
+        self.missile = MagicMissile(self.player.level, self.player.rect.center)
+        self.powergroup = pygame.sprite.LayeredDirty()
+        self.powergroup.add(self.missile.bolt)
         
     # the update method. This one is called in the game_loop (from the engine) but it must be run in this file.    
     def update(self):
+        
+        
         self.screen_rect.topleft = (-self.background.rect.x, -self.background.rect.y)    
         self.limit_rooms(self.rooms, self.screen_rect)
         self.l_mobs = self.limit_mobs(self.screen_rect, self.mobs)
+
+        self.missile.set_missile(self.rooms, self.l_mobs)
 
         self.allsprites = self.add_rooms()
         self.allsprites.add(self.player)
         self.allsprites.add(self.l_mobs)
         
+        
          
         # Movement for the player.
-        self.player_move(self.player.dir, self.cp, (self.w, self.h), self.rooms, self.player, self.player.speed)
+        self.player.move(self.player.dir, self.cp, (self.w, self.h))
         
         self.cp.x, self.cp.y = self.find_position(self.player.rect.x, self.player.rect.y, 
                                                             self.background.rect.x, self.background.rect.y)
@@ -80,7 +91,7 @@ class Game(Engine):
         self.map_move(self.background, self.cp, self.w, self.h) 
 
         for mob in self.l_mobs:
-            mob.run(self.rooms, self.time_passed)
+            mob.run(self.rooms, self.l_mobs)
 
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.           
@@ -90,8 +101,10 @@ class Game(Engine):
         
         self.allsprites.set_clip(self.screen_rect)
         self.allsprites.update()
+        self.powergroup.update()
 
         self.allsprites.draw(self.background.image) #Here we draw the map onto the background surface.
+        self.powergroup.draw(self.background.image)
         pygame.draw.rect(self.background.image, (255, 255, 255), self.screen_rect, -1)
         self.bg.draw(self.screen)
         self.screen.blit(self.mouse_image, self.mouse_pos) #Here we draw the mouse pointer image to the screen (NOT the background)
@@ -124,7 +137,13 @@ class Game(Engine):
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
     def mouse_down(self, button, pos):
-        pass
+        b_pos_x = pos[0] - self.background.rect.x 
+        b_pos_y = pos[1] - self.background.rect.y
+        b_pos = (b_pos_x, b_pos_y)
+        if button == 1:
+            self.powergroup.add(self.missile.bolt)
+            self.missile.bolt.fire(self.player.rect.center, b_pos)
+
     
     def mouse_up(self, button, pos):
         pass
@@ -132,10 +151,13 @@ class Game(Engine):
     # Event method for mouse motion.
     def mouse_motion(self, buttons, pos, rel):
         self.mouse_pos = pos
+
         
        # Here we call the method to rotate the mouse.
-        self.player.rot = self.rotate((self.cp.centerx, self.cp.centery), self.mouse_pos)
-        self.player.image = self.rotate_image(self.playerimg, (self.player.rot))
+        self.player.rot = self.rotate((self.cp.centerx, self.cp.centery), 
+                            (self.mouse_pos[0] + (self.mouse_rect.width/2), 
+                            self.mouse_pos[1] + (self.mouse_rect.height/2)))
+        self.player.image = self.rotate_image(self.player.base_img, (self.player.rot))
 
         self.map_scroll(self.mouse_pos, self.w, self.h,)
                   

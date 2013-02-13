@@ -78,31 +78,13 @@ class Engine(object):
     def mouse_motion(self, buttons, pos, rel):
         pass
     
-   # Movement and collision detection calls for the player 
-    def player_move(self, dir, screenpos, screensize, rooms, player, player_speed):
-        if dir[0] == 1:
-            if screenpos[1] > (screensize[1]/50):    
-                player.rect.y -= player_speed
-                self.collision(rooms, player, "UP")
-        if dir[1] == 1:
-            if screenpos[0] > (screensize[0]/50):
-                player.rect.x -= player_speed
-                self.collision(rooms, player, "LEFT")
-        if dir[2] == 1:
-            if screenpos[1] < (screensize[1] - (screensize[1]/50)):
-                player.rect.y += player_speed
-                self.collision(rooms, player, "DOWN")
-        if dir[3] == 1:
-            if screenpos[0] < (screensize[0] - (screensize[0]/50)):
-                player.rect.x += player_speed
-                self.collision(rooms, player, "RIGHT")
-        
     
     # Rotates any object, to face any other object.        
     def rotate(self, pos1, pos2):  
         angle = math.atan2(pos1[0] - pos2[0], pos1[1] - pos2[1])
         angle = angle * (180/ math.pi)
         angle = (angle) % 360
+        angle += 90
         return angle
    
    # Pygame rotation messes up images, this keeps em in line. 
@@ -112,24 +94,6 @@ class Engine(object):
         img_rect.center = img_rotd.get_rect().center
         img_rotd = img_rotd.subsurface(img_rect).copy()
         return img_rotd
-    
-# Rectangle based collision detection. Requires a list of all rectangles to check collision on, 
-# the rect object to check and a string for collision.
-    def collision(self, rooms, sprite, direction):
-        
-        for i in rooms:
-            if sprite.rect.colliderect(i.rect) == True:
-                i.dirty_sprite(i.tiles)
-                for wall in i.walls:
-                    if sprite.rect.colliderect(wall.rect) == True:
-                        if direction == "UP":
-                            sprite.rect.top = wall.rect.bottom
-                        if direction == "LEFT":
-                            sprite.rect.left = wall.rect.right
-                        if direction == "DOWN":
-                            sprite.rect.bottom = wall.rect.top
-                        if direction == "RIGHT":
-                            sprite.rect.right = wall.rect.left
                     
    
     def limit_rooms(self, rooms, screen):
@@ -168,7 +132,6 @@ class Engine(object):
 
         return pos_x, pos_y
    
-
     # Using the mouse we scroll the map, without going away from the player.
     def map_scroll(self, mouse_pos, sw, sh):
 
@@ -247,7 +210,6 @@ class Engine(object):
     def add_mobs(self, num, rooms):
         mobslist = pygame.sprite.LayeredDirty()
         for i in rooms:
-            print i.ident
             if i == rooms[0]:
                 pass
             elif i.ident == "ROOM":
@@ -258,10 +220,9 @@ class Engine(object):
     def generate_mobs(self, num, rect):
         mobgroup = []
         for i in xrange(num):
-            i = Mob()
+            i = Mob((random.randint(rect.left, rect.right), random.randint(rect.top, rect.bottom)), 
+                    (random.choice([-1, 1]), random.choice([-1, 1])))
             i.select(random.randint(1, 6))
-            i.rect.center = (random.randint((rect.left + 1), (rect.right - 1))), (random.randint((rect.top + 1), (rect.bottom - 1)))
-            i.pos = vec2d(i.rect.centerx, i.rect.centery)
             mobgroup.append(i)
         return mobgroup
     
