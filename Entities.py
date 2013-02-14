@@ -14,6 +14,14 @@ class Entity(pygame.sprite.DirtySprite):
         self.dirty = 1
         self.rooms = "rooms"
 
+    def health_bar(self, pos, health):
+        health_bar_x = pos.x - 7
+        health_bar_y = pos.y - self.image_h / 2 - 6
+        self.screen.fill(pygame.Color("red"), 
+                            (health_bar_x, health_bar_y, 15, 4))
+        self.screen.fill(pygame.Color("green"), 
+                            (health_bar_x, health_bar_y, self.health, 4))
+
 
     def movement(self):
         pass
@@ -37,6 +45,8 @@ class Entity(pygame.sprite.DirtySprite):
                         if direction == "RIGHT":
                             sprite.rect.right = wall.rect.left
 
+        
+
 class Player(Entity):  
     # Here I load up the player, and the variables necessary for movement and rotation.
     def __init__(self):
@@ -44,12 +54,32 @@ class Player(Entity):
         self.image = pygame.image.load("player.png").convert_alpha()
         self.base_img = self.image
         self.rect = self.image.get_rect()
+        self.pos = vec2d(0,0)
         self.dirty = 1
         self.rot = 0
         self.speed = 15
         self.dir = [0, 0, 0, 0]
         self.ident = "Player"
         self.level = 1
+        self.hp = self.level * 100
+        self.timer = True
+        pygame.time.set_timer(USEREVENT+1, 2000)
+
+    def update(self):
+        self.pos.x = self.rect.centerx
+        self.pos.y = self.rect.centery
+        if self.hp <= 0:
+            self.kill()
+
+    def damage(self, dmg):
+        if self.timer == True:
+            self.hp -= dmg
+            print self.hp
+            self.timer = False
+
+        
+
+
 
     # Movement and collision detection calls for the player 
     def move(self, dir, screenpos, screensize):
@@ -73,9 +103,11 @@ class Player(Entity):
                 
 
 class Mob(Entity):
-    def __init__(self, init_pos, init_dir):
+    def __init__(self, init_pos, init_dir, player):
         Entity.__init__(self)
         self.dirty = 1
+        self.player = player
+        self.bg = None
         self.npcmove = [0, 0, 0, 0]
         self.ident = "Mob"
         self.pos = vec2d(init_pos)
@@ -85,14 +117,16 @@ class Mob(Entity):
         self.walls = None
         self.npcmove = [0,0,0,0]
         self.counter = 0
-        self.hp = 100
+        self.lvl = random.randint(1, (self.player.level + 4))
+        self.hp = self.lvl * 100
+        
         
 
     def select(self, num):
         if num == 1:
             self.image = pygame.image.load("mob_green.png").convert_alpha()
             self.base_image = self.image
-            self.rect = self.image.get_rect()
+            self.rect = self.image.get_bounding_rect()
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
@@ -100,7 +134,7 @@ class Mob(Entity):
         elif num == 2:
             self.image = pygame.image.load("mob_red.png").convert_alpha()
             self.base_image = self.image
-            self.rect = self.image.get_rect()
+            self.rect = self.image.get_bounding_rect()
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
@@ -108,7 +142,7 @@ class Mob(Entity):
         elif num == 3:
             self.image = pygame.image.load("mob_yellow.png").convert_alpha()
             self.base_image = self.image
-            self.rect = self.image.get_rect()
+            self.rect = self.image.get_bounding_rect()
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
@@ -116,7 +150,7 @@ class Mob(Entity):
         elif num == 4:
             self.image = pygame.image.load("mob_orange.png").convert_alpha()
             self.base_image = self.image
-            self.rect = self.image.get_rect()
+            self.rect = self.image.get_bounding_rect()
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
@@ -124,7 +158,7 @@ class Mob(Entity):
         elif num == 5:
             self.image = pygame.image.load("mob_pink.png").convert_alpha()
             self.base_image = self.image
-            self.rect = self.image.get_rect()
+            self.rect = self.image.get_bounding_rect()
             self.rect.center = self.pos.inttup()
             self.speed = 5
             self.num = num
@@ -132,7 +166,7 @@ class Mob(Entity):
         elif num == 6:
             self.image = pygame.image.load("mob_white.png").convert_alpha()
             self.base_image = self.image
-            self.rect = self.image.get_rect()
+            self.rect = self.image.get_bounding_rect()
             self.rect.center = self.pos.inttup()
             self.speed = 5
             self.num = num
@@ -148,6 +182,19 @@ class Mob(Entity):
     def move(self):
         self.rect.center = self.pos.inttup()
 
+    def health_bar(self):
+        self.health = int(0.3 * self.hp / self.lvl)
+        health_bar_x = self.pos.x - 15
+        health_bar_y = self.pos.y - 15
+        if (self.lvl * 100) != self.hp:
+            redbar = pygame.Rect(health_bar_x, health_bar_y, 30, 4)
+            greenbar = pygame.Rect(health_bar_x, health_bar_y, self.health, 4)
+        else:
+            redbar = pygame.Rect(0, 0, 0, 0)
+            greenbar = pygame.Rect(0, 0, 0, 0)
+
+        return redbar, greenbar 
+
     def run(self, rooms, mobs):
         self.dirty = 1
         if self.hp <= 0:
@@ -160,6 +207,7 @@ class Mob(Entity):
         self.move()
         #self.track()
         self.collide_other(mobs)
+        self.collide_player()
         
 
     def collide(self):
@@ -183,6 +231,16 @@ class Mob(Entity):
                         shove.length = overlap/2
                         mob2.pos += shove
                         mob.pos -= shove
+
+    def collide_player(self):
+        dist = self.pos.get_distance(self.player.pos)
+        if dist < 32:
+            overlap = 32 - dist
+            shove = self.player.pos - self.pos
+            shove.length = overlap
+            self.pos -= shove
+            self.player.damage((self.lvl * 20))
+            
 
     def rotate(self, angle):
         self.dir.rotate(angle)

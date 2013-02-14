@@ -41,6 +41,8 @@ class Engine(object):
                 self.mouse_up(event.button, event.pos)
             elif event.type == MOUSEMOTION:
                 self.mouse_motion(event.buttons, event.pos, event.rel)
+            elif event.type == USEREVENT+1:
+                self.user_event(event)
         
 #The mainloop runs the game, nothing that is not in here will run.
     def main_loop(self, fps=0): 
@@ -61,6 +63,9 @@ class Engine(object):
     
 # This function is also called by the main loop, and will also mostly be run by child classes.
     def draw(self): 
+        pass
+
+    def user_event(self):
         pass
     
     def key_down(self, key):
@@ -207,22 +212,23 @@ class Engine(object):
         return bx, by
 
 
-    def add_mobs(self, num, rooms):
+    def add_mobs(self, num, rooms, p_lvl, surf):
         mobslist = pygame.sprite.LayeredDirty()
         for i in rooms:
             if i == rooms[0]:
                 pass
             elif i.ident == "ROOM":
-                temp = self.generate_mobs(num, i.rect)
+                temp = self.generate_mobs(num, i.rect, p_lvl, surf)
                 mobslist.add(temp)
         return mobslist
 
-    def generate_mobs(self, num, rect):
+    def generate_mobs(self, num, rect, p_lvl, surf):
         mobgroup = []
         for i in xrange(num):
             i = Mob((random.randint(rect.left, rect.right), random.randint(rect.top, rect.bottom)), 
-                    (random.choice([-1, 1]), random.choice([-1, 1])))
+                    (random.choice([-1, 1]), random.choice([-1, 1])), p_lvl)
             i.select(random.randint(1, 6))
+            i.bg = surf
             mobgroup.append(i)
         return mobgroup
     
