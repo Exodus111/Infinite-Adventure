@@ -15,7 +15,7 @@ from Entities import *
 # First we intialize pygame and set up a few class variables.
 class Engine(object):
     def __init__(self, size=(640, 480), fill=(255, 255, 255)):   
-        os.environ["SDL_VIDEO_CENTERED"] = "1"
+        os.environ["SDL_VIDEO_CENTERED"] = "2"
         pygame.init()
         pygame.mouse.set_visible(False)      
         self.screen = pygame.display.set_mode(size)

@@ -13,6 +13,7 @@ from Mainloop import *
 from Entities import *
 from Powers import *
 from MagicEffects import *
+from gui import *
 
 fps = 60
 # This is the main class of the game, it inherits from the "engine" class, the __init__ method loads most of the game assets. 
@@ -37,6 +38,7 @@ class Game(Engine):
         self.background = GameSurface((8000, 8000), (0, 0), blackColor)
         self.bg = pygame.sprite.LayeredDirty(self.background)
 
+
         # Here we start making the map. (This takes the longest time to load)
         self.rooms = self.generate_room(self.blocksize, self.background.levelsize)
         
@@ -55,6 +57,8 @@ class Game(Engine):
         self.player.set_collide(self.rooms)
         self.playerimg = self.player.image
         
+        # Here we mage the Gui
+        self.gui = GUI((self.w, self.h), self.player.level)
         
         # Then we need to set up the rooms, placing the player in the first one.
         # (and centering the screen on him)
@@ -69,12 +73,15 @@ class Game(Engine):
         # And we set up the players powers
         
         self.powergroup = pygame.sprite.LayeredDirty()
-        
+        self.b3 = False
         
     # the update method. This one is called in the game_loop (from the engine) 
     # but it must be run in this file.    
     def update(self):
         
+        # Updating the gui.
+        self.gui.update(self.player.hp)
+
         # This is the rectangle for our screen.
         self.screen_rect.topleft = (-self.background.rect.x, -self.background.rect.y)    
         # We then use that rectangle to cut away anything we do not need to render.
@@ -94,7 +101,10 @@ class Game(Engine):
                                                             self.background.rect.x, self.background.rect.y)
         
         # Here we scroll the map using the mouse pointer.
-        self.map_move(self.background, self.cp, self.w, self.h) 
+        self.map_move(self.background, self.cp, self.w, self.h)
+
+        if self.b3 == True:
+            self.cone.effect.fire(self.player.rect.center, self.b_pos) 
 
         self.greenbars = []
         self.redbars = []
@@ -103,6 +113,8 @@ class Game(Engine):
             redbar, greenbar = mob.health_bar()
             self.redbars.append(redbar)
             self.greenbars.append(greenbar)
+
+
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.           
     def draw(self):
@@ -115,6 +127,11 @@ class Game(Engine):
 
         self.allsprites.draw(self.background.image) #Here we draw the map onto the background surface.
         self.powergroup.draw(self.background.image)
+        for power in self.powergroup:
+            if power.state == "EXPLODING":
+                pygame.draw.circle(self.background.image, (255, 255, 255), power.pos.inttup(), power.radius, 1)
+            elif power.state == "CONE":
+                pygame.draw.aalines(self.background.image, (255, 255, 255), True, power.vectorlist)
 
         for bars in self.redbars:
             pygame.draw.rect(self.background.image, pygame.Color("red"), bars)
@@ -124,6 +141,7 @@ class Game(Engine):
         pygame.draw.rect(self.background.image, (255, 255, 255), self.screen_rect, -1)
         self.bg.draw(self.screen)
         self.screen.blit(self.mouse_image, self.mouse_pos) #Here we draw the mouse pointer image to the screen (NOT the background)
+        self.gui.draw(self.screen)
         pygame.display.update()
 
 
@@ -142,6 +160,27 @@ class Game(Engine):
             self.player.dir[3] = 1
         if key == K_ESCAPE:
             pygame.quit()
+        if key == K_2:
+            self.ball = Powers(self.player.level, self.player.rect.center)
+            self.ball.fire_ball()
+            self.ball.set_collision(self.rooms, self.l_mobs)
+            self.powergroup.add(self.ball.effect)
+            self.ball.effect.fire(self.player.rect.center, self.b_pos)
+        if key == K_3:
+            self.b3 = True
+            self.cone = Powers(self.player.level, self.player.rect.center)
+            self.cone.cone_of_frost()
+            self.cone.set_collision(None, self.l_mobs)
+            self.powergroup.add(self.cone.effect)
+            self.cone.effect.fire(self.player.rect.center, self.b_pos)
+        if key == K_4:
+            self.ring = Powers(self.player.level, self.player.rect.center)
+            self.ring.ring_of_fire()
+            self.ring.set_collision(None, self.l_mobs)
+            self.powergroup.add(self.ring.effect)
+            self.ring.effect.fire(self.player.rect.center, None)
+
+
 
     # An event method giving us all key up presses. 
     def key_up(self, key):
@@ -153,19 +192,19 @@ class Game(Engine):
             self.player.dir[2] = 0
         if key in (K_d, K_RIGHT):
             self.player.dir[3] = 0
+        if key == K_3:
+            self.b3 = False
+            self.cone.effect.state == "DEAD"
     
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
     def mouse_down(self, button, pos):
-        b_pos_x = pos[0] - self.background.rect.x 
-        b_pos_y = pos[1] - self.background.rect.y
-        b_pos = (b_pos_x, b_pos_y)
         if button == 1:
             self.missile = Powers(self.player.level, self.player.rect.center)
             self.missile.magic_missile()
             self.missile.set_collision(self.rooms, self.l_mobs)
-            self.powergroup.add(self.missile.bolt)
-            self.missile.bolt.fire(self.player.rect.center, b_pos)
+            self.powergroup.add(self.missile.effect)
+            self.missile.effect.fire(self.player.rect.center, self.b_pos)
 
     
     def mouse_up(self, button, pos):
@@ -174,6 +213,9 @@ class Game(Engine):
     # Event method for mouse motion.
     def mouse_motion(self, buttons, pos, rel):
         self.mouse_pos = pos
+        b_pos_x = pos[0] - self.background.rect.x 
+        b_pos_y = pos[1] - self.background.rect.y
+        self.b_pos = (b_pos_x, b_pos_y)
 
         
        # Here we call the method to rotate the mouse.

@@ -69,12 +69,13 @@ class Player(Entity):
         self.pos.x = self.rect.centerx
         self.pos.y = self.rect.centery
         if self.hp <= 0:
+            print "You are DEAD!"
             self.kill()
 
     def damage(self, dmg):
         if self.timer == True:
             self.hp -= dmg
-            print self.hp
+            print "You where hit for", dmg
             self.timer = False
 
         
