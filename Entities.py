@@ -13,6 +13,7 @@ class Entity(pygame.sprite.DirtySprite):
         pygame.sprite.DirtySprite.__init__(self)
         self.dirty = 1
         self.rooms = "rooms"
+        self.state = "NORMAL"
 
     def health_bar(self, pos, health):
         health_bar_x = pos.x - 7
@@ -62,23 +63,49 @@ class Player(Entity):
         self.ident = "Player"
         self.level = 1
         self.hp = self.level * 100
-        self.timer = True
-        pygame.time.set_timer(USEREVENT+1, 2000)
+        self.mana = self.level * 100
+        self.time = 0.0
+        self.mana_timer = 0.0
+        self.health_timer = 0.0
+        self.dmg_timer = 0.0
+        self.shout = pygame.font.SysFont("arial", 15)
+        self.cast_time = 0.0
 
-    def update(self):
+
+    def update(self, time):
+        self.time = time
         self.pos.x = self.rect.centerx
         self.pos.y = self.rect.centery
+        self.mssg_rect = (self.rect.x - 15, self.rect.y - 15)
+        if self.state == "SHOUTING":
+            if self.cast_time < self.time:
+                self.state = "NORMAL"
         if self.hp <= 0:
             print "You are DEAD!"
             self.kill()
+        self.regen()
+
+    def regen(self):
+        if self.mana < self.level * 100:
+            if self.mana_timer < self.time:
+                self.mana_timer = self.time + 1.0
+                self.mana += 1
+        if self.hp < self.level * 100:
+            if self.health_timer < self.time:
+                self.health_timer = self.time + 5.0
+                self.hp += 1   
+
 
     def damage(self, dmg):
-        if self.timer == True:
+        if self.dmg_timer < self.time:
             self.hp -= dmg
             print "You where hit for", dmg
-            self.timer = False
+            self.dmg_timer = self.time + 1.0
 
-        
+    def shout_spell(self, spell):
+        self.mssg = self.shout.render(spell, True, (255, 255, 0))
+        self.cast_time = self.time + 1.0
+        self.state = "SHOUTING"
 
 
 
@@ -120,6 +147,10 @@ class Mob(Entity):
         self.counter = 0
         self.lvl = random.randint(1, (self.player.level + 4))
         self.hp = self.lvl * 100
+        self.time = 0
+
+    def update(self, time):
+        self.time = time
         
         
 

@@ -31,7 +31,11 @@ class Game(Engine):
         sgidarkgray = (85, 85, 85)
         yellowColor = (255, 255, 0)
         self.time_passed = self.clock.get_fps()
-        
+        self.cd1 = 0.0
+        self.cd2 = 0.0
+        self.cd3 = 0.0
+        self.cd4 = 0.0
+
         
         # Setting up the background surface (the game map).
         self.blocksize = 32
@@ -58,7 +62,7 @@ class Game(Engine):
         self.playerimg = self.player.image
         
         # Here we mage the Gui
-        self.gui = GUI((self.w, self.h), self.player.level)
+        self.gui = GUI((self.w, self.h), self.player)
         
         # Then we need to set up the rooms, placing the player in the first one.
         # (and centering the screen on him)
@@ -72,6 +76,7 @@ class Game(Engine):
 
         # And we set up the players powers
         
+        
         self.powergroup = pygame.sprite.LayeredDirty()
         self.b3 = False
         
@@ -80,7 +85,7 @@ class Game(Engine):
     def update(self):
         
         # Updating the gui.
-        self.gui.update(self.player.hp)
+        self.gui.update(self.player)
 
         # This is the rectangle for our screen.
         self.screen_rect.topleft = (-self.background.rect.x, -self.background.rect.y)    
@@ -90,9 +95,11 @@ class Game(Engine):
 
 
         # Adding the cut down sprites to the draw group.
-        self.allsprites = self.add_rooms()
-        self.allsprites.add(self.player)
-        self.allsprites.add(self.l_mobs)
+        self.wallsprites = self.add_rooms()
+
+        self.mobgroup = pygame.sprite.LayeredDirty()
+        self.mobgroup.add(self.player)
+        self.mobgroup.add(self.l_mobs)
         
          
         # Movement for the player.
@@ -104,7 +111,7 @@ class Game(Engine):
         self.map_move(self.background, self.cp, self.w, self.h)
 
         if self.b3 == True:
-            self.cone.effect.fire(self.player.rect.center, self.b_pos) 
+            self.cone.effect.fire(self.player.rect.center, self.b_pos, self.delta_time) 
 
         self.greenbars = []
         self.redbars = []
@@ -114,18 +121,23 @@ class Game(Engine):
             self.redbars.append(redbar)
             self.greenbars.append(greenbar)
 
-
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.           
     def draw(self):
         
         # Here we clip to the clipping rectangle.
         
-        self.allsprites.set_clip(self.screen_rect)
-        self.allsprites.update()
-        self.powergroup.update()
+        self.wallsprites.set_clip(self.screen_rect)
+        self.wallsprites.update()
+        self.mobgroup.update(self.delta_time)
+        self.powergroup.update(self.delta_time)
 
-        self.allsprites.draw(self.background.image) #Here we draw the map onto the background surface.
+        self.wallsprites.draw(self.background.image) #Here we draw the map onto the background surface.
+        self.mobgroup.draw(self.background.image)
+        for mob in self.mobgroup:
+            if mob.state == "SHOUTING":
+                self.background.image.blit(mob.mssg, mob.mssg_rect)
+
         self.powergroup.draw(self.background.image)
         for power in self.powergroup:
             if power.state == "EXPLODING":
@@ -146,7 +158,7 @@ class Game(Engine):
 
 
     def user_event(self, event):
-        self.player.timer = True
+        pass
 
     # An event method giving us all key down presses.
     def key_down(self, key):
@@ -161,24 +173,44 @@ class Game(Engine):
         if key == K_ESCAPE:
             pygame.quit()
         if key == K_2:
-            self.ball = Powers(self.player.level, self.player.rect.center)
-            self.ball.fire_ball()
-            self.ball.set_collision(self.rooms, self.l_mobs)
-            self.powergroup.add(self.ball.effect)
-            self.ball.effect.fire(self.player.rect.center, self.b_pos)
+            if self.cd2 < self.delta_time:
+                self.ball = Powers(self.player.level, self.player.rect.center)
+                self.ball.fire_ball()
+                if self.player.mana >= self.ball.manacost:
+                    self.ball.set_collision(self.rooms, self.l_mobs)
+                    self.powergroup.add(self.ball.effect)
+                    self.ball.effect.fire(self.player.rect.center, self.b_pos)
+                    self.player.shout_spell(self.ball.name)
+                    self.player.mana -= self.ball.manacost
+                    self.cd2 = self.delta_time + self.ball.cooldown
+                else:
+                    print "Not enough Mana"
         if key == K_3:
-            self.b3 = True
-            self.cone = Powers(self.player.level, self.player.rect.center)
-            self.cone.cone_of_frost()
-            self.cone.set_collision(None, self.l_mobs)
-            self.powergroup.add(self.cone.effect)
-            self.cone.effect.fire(self.player.rect.center, self.b_pos)
+            if self.cd3 < self.delta_time:
+                self.cone = Powers(self.player.level, self.player.rect.center)
+                self.cone.cone_of_frost()
+                if self.player.mana >= self.cone.manacost:
+                    self.b3 = True  
+                    self.cone.set_collision(None, self.l_mobs)
+                    self.powergroup.add(self.cone.effect)
+                    self.player.shout_spell(self.cone.name)
+                    self.player.mana -= self.cone.manacost
+                    self.cd3 = self.delta_time + self.cone.cooldown
+                else:
+                    print "Not enough Mana"
         if key == K_4:
-            self.ring = Powers(self.player.level, self.player.rect.center)
-            self.ring.ring_of_fire()
-            self.ring.set_collision(None, self.l_mobs)
-            self.powergroup.add(self.ring.effect)
-            self.ring.effect.fire(self.player.rect.center, None)
+            if self.cd4 < self.delta_time:
+                self.ring = Powers(self.player.level, self.player.rect.center)
+                self.ring.ring_of_fire()
+                if self.player.mana >= self.ring.manacost:
+                    self.ring.set_collision(None, self.l_mobs)
+                    self.powergroup.add(self.ring.effect)
+                    self.ring.effect.fire(self.player.rect.center, None)
+                    self.player.shout_spell(self.ring.name)
+                    self.player.mana -= self.ring.manacost
+                    self.cd4 = self.delta_time + self.ring.cooldown
+                else:
+                    print "Not enough Mana"
 
 
 
@@ -200,12 +232,18 @@ class Game(Engine):
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
     def mouse_down(self, button, pos):
         if button == 1:
-            self.missile = Powers(self.player.level, self.player.rect.center)
-            self.missile.magic_missile()
-            self.missile.set_collision(self.rooms, self.l_mobs)
-            self.powergroup.add(self.missile.effect)
-            self.missile.effect.fire(self.player.rect.center, self.b_pos)
-
+            if self.cd1 < self.delta_time:
+                self.missile = Powers(self.player.level, self.player.rect.center)
+                self.missile.magic_missile()
+                if self.player.mana >= self.missile.manacost:
+                    self.missile.set_collision(self.rooms, self.l_mobs)
+                    self.powergroup.add(self.missile.effect)
+                    self.missile.effect.fire(self.player.rect.center, self.b_pos)
+                    self.player.shout_spell(self.missile.name)
+                    self.player.mana -= self.missile.manacost
+                    self.cd1 = self.delta_time + self.missile.cooldown
+                else:
+                    print "Not enough Mana"
     
     def mouse_up(self, button, pos):
         pass

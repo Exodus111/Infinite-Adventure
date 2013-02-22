@@ -11,13 +11,15 @@ class MagicEffect(pygame.sprite.DirtySprite):
 		pygame.sprite.DirtySprite.__init__(self)
 		self.dirty = 1
 		self.var = 0
+	
 
 	def set_collision(self, rooms, mobs):
 		
 		self.rooms = rooms
 		self.mobs = mobs
 
-	def update(self):
+	def update(self, time):
+
 		if self.state == "LOADED":
 			self.dirty = 0
 		elif self.state == "CONE":
@@ -35,11 +37,12 @@ class MagicEffect(pygame.sprite.DirtySprite):
 			else:
 				self.var += 1
 
-	def fire(self, p_pos, target):
+	def fire(self, p_pos, target):	
 		self.pos = vec2d(p_pos)
 		self.target = vec2d(target)
 		self.dir = self.target - self.pos
 		self.state = "FIRING"
+			
 
 	def move(self):
 		if self.dir.length > self.speed:
@@ -71,6 +74,7 @@ class Bolt(MagicEffect):
 		self.speed = speed
 		self.damage = damage
 		self.state = "LOADED"
+		
 
 class Ball(MagicEffect):
 	def __init__(self, image, speed, pos, damage):
@@ -83,6 +87,7 @@ class Ball(MagicEffect):
 		self.speed = speed
 		self.damage = damage
 		self.state = "LOADED"
+		
 
 	def collide(self):
 		for room in self.rooms:
@@ -119,36 +124,41 @@ class Cone(MagicEffect):
 		self.damage = damage
 		self.state = "LOADED"
 		self.angle = 20
+		self.dot = 0.0
+		
 
-	def fire(self, p_pos, target):
+	def fire(self, p_pos, target, time):
+		self.timer = time
 		self.pos = vec2d(p_pos)
 		self.target = vec2d(target)
-		vector = self.pos - self.target
-		vector.angle += 90
-		vector.length = vector.length/20
-		self.vector1 = self.pos - vector
-		self.vector2 = self.pos + vector
-		vector.length = vector.length*6
-		self.vector3 = self.target + vector
-		self.vector4 = self.target - vector
+		self.vector = self.pos - self.target
+		self.vector.angle += 90
+		self.vector.length = self.vector.length/20
+		self.vector1 = self.pos - self.vector
+		self.vector2 = self.pos + self.vector
+		self.vector.length = self.vector.length*6
+		self.vector3 = self.target + self.vector
+		self.vector4 = self.target - self.vector
 		self.vectorlist = [self.vector1, self.vector2, self.vector3, self.vector4]
-		tempsurf = pygame.Surface((800, 600))
-		self.conerect = pygame.draw.aalines(tempsurf, (0,0,0), 1, self.vectorlist)
 		self.state = "CONE"
 		self.collide()
+
 		
 	def collide(self):
-
 		for mob in self.mobs:
-			vector = self.pos - self.target
 			mobvec = self.pos - mob.pos
-			if mobvec.length < vector.length:
-				vector = vector.normalized()
+			if mobvec.length < self.vector.length:
+				self.vector = self.vector.normalized()
 				mobvec = mobvec.normalized()
-				theDot = vector.dot(mobvec)
+				theDot = self.vector.dot(mobvec)
 				angle = math.radians(self.angle)
 				if angle > math.acos(theDot):
-					mob.damage(self.damage)
+					self.damage_dot(mob)
+
+	def damage_dot(self, mob):
+		if self.dot < self.timer:
+			mob.damage(self.damage)
+			self.dot = self.timer + 0.5
 
 
 

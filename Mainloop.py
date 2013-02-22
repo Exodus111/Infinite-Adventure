@@ -24,6 +24,7 @@ class Engine(object):
         self.start = True
         self.surf_dir = [False, False, False, False]
         self.temp_pos = (0,0)
+        self.delta_time = 0.0
         
      
 # The Event handler fires off in case of events and runs the appropriate function.        
@@ -41,11 +42,12 @@ class Engine(object):
                 self.mouse_up(event.button, event.pos)
             elif event.type == MOUSEMOTION:
                 self.mouse_motion(event.buttons, event.pos, event.rel)
-            elif event.type == USEREVENT+1:
+            elif event.type == USEREVENT:
                 self.user_event(event)
         
 #The mainloop runs the game, nothing that is not in here will run.
-    def main_loop(self, fps=0): 
+    def main_loop(self, fps=0):
+        delta = 0.0 
         self.running = True
         
         while self.running:
@@ -53,8 +55,11 @@ class Engine(object):
             self.event_handler()
             self.update()
             self.draw()
-            #pygame.display.flip()
+            pygame.display.flip()
             self.clock.tick(fps)
+            timer = self.clock.get_rawtime()
+            delta += float(timer)/1000
+            self.delta_time = delta
             
     
 # This function is also run in the mainloop, lots of code will go here, but mostly in child classes.
@@ -65,7 +70,7 @@ class Engine(object):
     def draw(self): 
         pass
 
-    def user_event(self):
+    def user_event(self, event):
         pass
     
     def key_down(self, key):

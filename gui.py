@@ -8,19 +8,24 @@ from pygame.locals import *
 
 class GUI(object):
 	"""docstring for GUI"""
-	def __init__(self, screen_size, player_level):
+	def __init__(self, screen_size, player):
 		self.screen_size = screen_size
-		self.player_level = player_level
+		self.player_level = player.level
+		self.max_hp = player.hp
+		self.max_mana = player.mana
 		self.button_one = 1
-		unit = (int(screen_size[0] * 0.2))
+		self.unit = (int(screen_size[0] * 0.2))
 		self.top = (int(screen_size[0] * 0.05), int(screen_size[1] * 0.05))
 		self.bottom = (int(screen_size[0] * 0.1), int(screen_size[1] * 0.9))
-		self.bottom_row = [self.bottom, (self.bottom[0] + unit, self.bottom[1]), 
-										(self.bottom[0] + unit*2, self.bottom[1]), 
-										(self.bottom[0] + unit*3, self.bottom[1]), 
-										(self.bottom[0] + unit*4, self.bottom[1]),
-										(self.bottom[0] + unit*5, self.bottom[1])]
-		self.healthbar = pygame.Rect(self.top[0]+30, self.top[1], unit, 15)
+		self.bottom_row = [self.bottom, (self.bottom[0] + self.unit, self.bottom[1]), 
+										(self.bottom[0] + self.unit*2, self.bottom[1]), 
+										(self.bottom[0] + self.unit*3, self.bottom[1]), 
+										(self.bottom[0] + self.unit*4, self.bottom[1]),
+										(self.bottom[0] + self.unit*5, self.bottom[1])]
+		self.healthbar = pygame.Rect(self.top[0]+30, self.top[1]-20, self.unit, 15)
+		self.redbar = pygame.Rect(self.top[0]+30, self.top[1]-20, self.unit, 15)
+		self.manabar = pygame.Rect(self.top[0]+30, self.top[1], self.unit, 15)
+		self.greybar = pygame.Rect(self.top[0]+30, self.top[1], self.unit, 15)
 		self.images()
 		self.text()
 
@@ -68,8 +73,17 @@ class GUI(object):
 
 
 
-	def update(self, hp):
-		self.hp = hp
+	def update(self, player):
+		self.hp = player.hp
+		self.mana = player.mana
+		if self.max_hp != self.hp:
+			bar_diff = ((self.unit / self.max_hp) * self.hp)
+			self.healthbar.width = bar_diff
+		if self.max_mana != self.mana:
+			bar_diff = ((self.unit / self.max_mana) * self.mana)
+			self.manabar.width = bar_diff
+		else:
+			self.manabar.width = self.unit    
 		
 
 
@@ -113,7 +127,10 @@ class GUI(object):
 		# Making the top row:
 		pygame.draw.circle(surf, (10, 10, 10), (self.top), 20, )
 		pygame.draw.circle(surf, (255, 0, 0), (self.top), 20, 1)
-		pygame.draw.rect(surf, (0, 255, 0), self.healthbar)
+		pygame.draw.rect(surf, pygame.Color("red"), self.redbar)
+		pygame.draw.rect(surf, pygame.Color("green"), self.healthbar)
+		pygame.draw.rect(surf, pygame.Color("grey"), self.greybar)
+		pygame.draw.rect(surf, pygame.Color("blue"), self.manabar)
 		surf.blit(self.player_lvl, self.player_health_pos)
 
 	def button_one(self, p_pos, target):

@@ -31,6 +31,7 @@ myRect3 = pygame.Rect(vector4.x, vector4.y, 5, 5)
 myRect4 = pygame.Rect(vector5.x, vector5.y, 5, 5)
 
 myList = [vector2.inttup(), vector3.inttup(), vector4.inttup(), vector5.inttup()]
+delta = 0
 
 while running:
 	for event in pygame.event.get():
@@ -43,5 +44,9 @@ while running:
 	pygame.draw.rect(background, (255, 255, 255), myRect4, 2)
 	pygame.draw.aalines(background, (255, 255, 255), True, myList)
 	screen.blit(background, (0,0))
+	timer = clock.get_rawtime()
+	delta += float(timer)/100
+	print int(delta)
 	clock.tick(60)
 	pygame.display.update()
+
