@@ -52,25 +52,73 @@ class Player(Entity):
     # Here I load up the player, and the variables necessary for movement and rotation.
     def __init__(self):
         Entity.__init__(self)
+        # Sprite info
+        self.dirty = 1
         self.image = pygame.image.load("player.png").convert_alpha()
         self.base_img = self.image
         self.rect = self.image.get_rect()
+        
+        # Movement info
         self.pos = vec2d(0,0)
-        self.dirty = 1
         self.rot = 0
         self.speed = 15
         self.dir = [0, 0, 0, 0]
+
+        # Player info
         self.ident = "Player"
+        self.xp = 0
         self.level = 1
+        self.shout = pygame.font.SysFont("arial", 15)
+
+        # HP and Mana
         self.hp = self.level * 100
         self.mana = self.level * 100
+        self.max_hp = self.level * 100
+        self.max_mana = self.level * 100
+
+        # Timers
         self.time = 0.0
         self.mana_timer = 0.0
         self.health_timer = 0.0
         self.dmg_timer = 0.0
-        self.shout = pygame.font.SysFont("arial", 15)
         self.cast_time = 0.0
 
+    def level_init(self):
+        self.leveldict = {}
+        lvl = self.level
+        req_xp = 100 * 2**(lvl - 1)
+
+        for i in xrange(20):
+            a = lvl
+            b = req_xp
+            self.leveldict[a] = b
+            lvl += 1
+            req_xp *= 2
+
+    def check_lvl(self):
+        current_xp = self.xp
+        current_lvl = self.level
+        temp_lvl = 0
+        for i in self.leveldict:
+            if current_xp > self.leveldict[i]:
+                temp_lvl = i + 1
+        if temp_lvl > current_lvl:
+            self.upgrade(temp_lvl)
+            self.level_init()
+
+    def upgrade(self, lvl):
+        dif = lvl - self.level
+        if dif == 0:
+            pass
+        else:
+            print "Congratualtions, you have leveled up"
+            print "You are now level: ", lvl
+            self.level = lvl
+            self.max_hp += (dif * 100 * 0.2)
+            self.max_mana += (dif * 100 * 0.3)
+            self.hp = self.max_hp
+            self.mana = self.max_mana
+        
 
     def update(self, time):
         self.time = time
@@ -86,11 +134,11 @@ class Player(Entity):
         self.regen()
 
     def regen(self):
-        if self.mana < self.level * 100:
+        if self.mana < self.max_mana:
             if self.mana_timer < self.time:
                 self.mana_timer = self.time + 1.0
                 self.mana += 1
-        if self.hp < self.level * 100:
+        if self.hp < self.max_hp:
             if self.health_timer < self.time:
                 self.health_timer = self.time + 5.0
                 self.hp += 1   
@@ -128,13 +176,13 @@ class Player(Entity):
                 self.rect.x += self.speed
                 self.collision(self, "RIGHT")
                 
-                
+
 
 class Mob(Entity):
     def __init__(self, init_pos, init_dir, player):
         Entity.__init__(self)
         self.dirty = 1
-        self.player = player
+        self.player_pos = player.pos
         self.bg = None
         self.npcmove = [0, 0, 0, 0]
         self.ident = "Mob"
@@ -145,9 +193,21 @@ class Mob(Entity):
         self.walls = None
         self.npcmove = [0,0,0,0]
         self.counter = 0
-        self.lvl = random.randint(1, (self.player.level + 4))
-        self.hp = self.lvl * 100
+        self.lvl = 1
+        self.max_hp = self.lvl * 100
+        self.hp = self.max_hp
         self.time = 0
+        self.xp = 25
+
+    def upgrade(self, lvl):
+        dif = lvl - self.lvl
+        if dif == 0:
+            pass
+        else:
+            self.lvl = lvl
+            self.max_hp += (dif * 100 * 0.2)
+            self.hp = self.max_hp
+            self.xp = 25 * 2**(self.lvl - 1)   
 
     def update(self, time):
         self.time = time
@@ -215,7 +275,7 @@ class Mob(Entity):
         self.rect.center = self.pos.inttup()
 
     def health_bar(self):
-        self.health = int(0.3 * self.hp / self.lvl)
+        self.health = int(30 / self.max_hp * self.hp)
         health_bar_x = self.pos.x - 15
         health_bar_y = self.pos.y - 15
         if (self.lvl * 100) != self.hp:
@@ -227,9 +287,12 @@ class Mob(Entity):
 
         return redbar, greenbar 
 
-    def run(self, rooms, mobs):
+    def run(self, rooms, mobs, player):
         self.dirty = 1
+        self.player = player
         if self.hp <= 0:
+            player.xp += self.xp
+            player.check_lvl()
             self.kill()
         for room in rooms:
             if self.rect.colliderect(room.rect):

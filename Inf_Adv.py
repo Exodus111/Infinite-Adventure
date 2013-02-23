@@ -57,6 +57,7 @@ class Game(Engine):
         # Here I load up the player, and the variables necessary 
         # for movement and rotation.
         self.player = Player()
+        self.player.level_init()
         self.cp = pygame.Rect(0, 0, self.player.rect.width, self.player.rect.height)   
         self.player.set_collide(self.rooms)
         self.playerimg = self.player.image
@@ -116,7 +117,7 @@ class Game(Engine):
         self.greenbars = []
         self.redbars = []
         for mob in self.l_mobs:
-            mob.run(self.rooms, self.l_mobs)
+            mob.run(self.rooms, self.l_mobs, self.player)
             redbar, greenbar = mob.health_bar()
             self.redbars.append(redbar)
             self.greenbars.append(greenbar)

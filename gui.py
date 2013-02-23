@@ -37,43 +37,41 @@ class GUI(object):
 		self.incomp_image = pygame.image.load("Fire_Ball.png").convert_alpha()
 
 	def text(self):
-		my_font = pygame.font.SysFont("arial", 20)
-		self.player_lvl = my_font.render(str(self.player_level), True, (255, 255, 255))
+		self.my_font = pygame.font.SysFont("arial", 20)
+		self.player_lvl = self.my_font.render(str(self.player_level), True, (255, 255, 255))
 		self.player_health_pos = pygame.Rect(0, 0, 10, 10)
 		self.player_health_pos.center = self.top
 		self.player_health_pos.y -= 8
 
-		self.msg1 = my_font.render("Magic Missile", True, (255, 255, 255))
+		self.msg1 = self.my_font.render("Magic Missile", True, (255, 255, 255))
 		self.msg1_rect = pygame.Rect(self.bottom_row[0][0]-60, self.bottom_row[0][1]+60, 50, 10)
-		self.button_1 = my_font.render("Button 1", True, (255, 255, 255))
+		self.button_1 = self.my_font.render("Button 1", True, (255, 255, 255))
 		self.button_1_rect = pygame.Rect(self.bottom_row[0][0]-60, self.bottom_row[0][1]+40, 50, 10)
 
-		self.msg2 = my_font.render("Fire Ball", True, (255, 255, 255))
+		self.msg2 = self.my_font.render("Fire Ball", True, (255, 255, 255))
 		self.msg2_rect = pygame.Rect(self.bottom_row[1][0]-60, self.bottom_row[1][1]+60, 50, 10)
-		self.button_2 = my_font.render("Button 2", True, (255, 255, 255))
+		self.button_2 = self.my_font.render("Button 2", True, (255, 255, 255))
 		self.button_2_rect = pygame.Rect(self.bottom_row[1][0]-60, self.bottom_row[1][1]+40, 50, 10)
 		
-		self.msg3 = my_font.render("Cone of Frost", True, (255, 255, 255))
+		self.msg3 = self.my_font.render("Cone of Frost", True, (255, 255, 255))
 		self.msg3_rect = pygame.Rect(self.bottom_row[2][0]-60, self.bottom_row[2][1]+60, 50, 10)
-		self.button_3 = my_font.render("Button 3", True, (255, 255, 255))
+		self.button_3 = self.my_font.render("Button 3", True, (255, 255, 255))
 		self.button_3_rect = pygame.Rect(self.bottom_row[2][0]-60, self.bottom_row[2][1]+40, 50, 10)
 		
-		self.msg4 = my_font.render("Ring of Fire", True, (255, 255, 255))
+		self.msg4 = self.my_font.render("Ring of Fire", True, (255, 255, 255))
 		self.msg4_rect = pygame.Rect(self.bottom_row[3][0]-60, self.bottom_row[3][1]+60, 50, 10)
-		self.button_4 = my_font.render("Button 4", True, (255, 255, 255))
+		self.button_4 = self.my_font.render("Button 4", True, (255, 255, 255))
 		self.button_4_rect = pygame.Rect(self.bottom_row[3][0]-60, self.bottom_row[3][1]+40, 50, 10)
 		
-		self.msg5 = my_font.render("Incomporable", True, (255, 255, 255))
+		self.msg5 = self.my_font.render("Incomporable", True, (255, 255, 255))
 		self.msg5_rect = pygame.Rect(self.bottom_row[4][0]-60, self.bottom_row[4][1]+60, 50, 10)
-		self.button_5 = my_font.render("Button 5", True, (255, 255, 255))
+		self.button_5 = self.my_font.render("Button 5", True, (255, 255, 255))
 		self.button_5_rect = pygame.Rect(self.bottom_row[4][0]-60, self.bottom_row[4][1]+40, 50, 10)
 		
 
-
-
-
-
 	def update(self, player):
+		self.max_hp = player.max_hp
+		self.max_mana = player.max_mana
 		self.hp = player.hp
 		self.mana = player.mana
 		if self.max_hp != self.hp:
@@ -83,7 +81,8 @@ class GUI(object):
 			bar_diff = ((self.unit / self.max_mana) * self.mana)
 			self.manabar.width = bar_diff
 		else:
-			self.manabar.width = self.unit    
+			self.manabar.width = self.unit
+		self.player_lvl = self.my_font.render(str(player.level), True, (255, 255, 255))
 		
 
 
@@ -133,10 +132,31 @@ class GUI(object):
 		pygame.draw.rect(surf, pygame.Color("blue"), self.manabar)
 		surf.blit(self.player_lvl, self.player_health_pos)
 
-	def button_one(self, p_pos, target):
-			if self.button_one == 1:
-				pass
 
-	def select_power(self):
-		pass
 
+
+class Power_window(object):
+	"""The powers window"""
+	def __init__(self, size):
+		self.size = int(size[0] / 1.2), int(size[1] / 1.2)
+		self.player = player
+		self.my_font = pygame.font.SysFont("arial", 20)
+
+
+	def update(self, powers, player):
+		position1_x = int(self.size[0]/4)
+		position1_y = int(self.size[1]/5)
+		self.power1_msg = self.my_font.render("Magic Missile", True, (255, 255, 255))
+		self.power1_rect = pygame.Rect(position1_x, position1_y, 50, 10)
+
+
+	def draw_window(self, surf):
+		window = pygame.Surface(self.size)
+
+
+		
+
+
+
+
+		

@@ -19,8 +19,8 @@ class Powers(object):
 		
 
 	def magic_missile(self):
-		self.dmg = (self.base_dmg[0] + (self.base_dmg[0] * self.p_lvl * 0.2), 
-					self.base_dmg[1] + (self.base_dmg[1] * self.p_lvl * 0.2))
+		self.dmg = (self.base_dmg[0] + ((self.base_dmg[0] * self.p_lvl) * 0.2), 
+					self.base_dmg[1] + ((self.base_dmg[1] * self.p_lvl) * 0.2))
 		self.speed = self.p_lvl + 4
 		self.name = "Magic Missile"
 		self.image1 = pygame.image.load("Magic_Bolt.png").convert_alpha()
@@ -34,8 +34,8 @@ class Powers(object):
 		
 
 	def fire_ball(self):
-		self.dmg = (self.base_dmg[0] + (self.base_dmg[0] * self.p_lvl * 0.2) *2, 
-					self.base_dmg[1] + (self.base_dmg[1] * self.p_lvl * 0.2) *5)
+		self.dmg = (self.base_dmg[0] + ((self.base_dmg[0] * self.p_lvl) * 0.2) *2, 
+					self.base_dmg[1] + ((self.base_dmg[1] * self.p_lvl) * 0.2) *5)
 		self.speed = 2 + (self.p_lvl * 0.2)
 		self.name = "Fire Ball"
 		self.image1 = pygame.image.load("Fire_Ball.png").convert_alpha()
@@ -45,8 +45,8 @@ class Powers(object):
 		self.manacost = 20
 
 	def cone_of_frost(self):
-		self.dmg = (self.base_dmg[0] + (self.base_dmg[0] * self.p_lvl * 0.2) *2, 
-					self.base_dmg[1] + (self.base_dmg[1] * self.p_lvl * 0.2) *5)
+		self.dmg = (self.base_dmg[0] + ((self.base_dmg[0] * self.p_lvl) * 0.2), 
+					self.base_dmg[1] + ((self.base_dmg[1] * self.p_lvl) * 0.2))
 		self.speed = 2 + (self.p_lvl * 0.2)
 		self.name = "Cone of Frost"
 		self.image1 = pygame.image.load("Fire_Ball.png").convert_alpha()
@@ -56,8 +56,8 @@ class Powers(object):
 		self.manacost = 15
 
 	def ring_of_fire(self):
-		self.dmg = (self.base_dmg[0] + (self.base_dmg[0] * self.p_lvl * 0.2) *2, 
-					self.base_dmg[1] + (self.base_dmg[1] * self.p_lvl * 0.2) *5)
+		self.dmg = (self.base_dmg[0] + ((self.base_dmg[0] * self.p_lvl) * 0.2) *2, 
+					self.base_dmg[1] + ((self.base_dmg[1] * self.p_lvl) * 0.2) *5)
 		self.speed = 2 + (self.p_lvl * 0.2)
 		self.name = "Ring of Fire"
 		self.image1 = pygame.image.load("Fire_Ball.png").convert_alpha()

@@ -233,6 +233,7 @@ class Engine(object):
             i = Mob((random.randint(rect.left, rect.right), random.randint(rect.top, rect.bottom)), 
                     (random.choice([-1, 1]), random.choice([-1, 1])), p_lvl)
             i.select(random.randint(1, 6))
+            i.upgrade(random.randint(1, 5))
             i.bg = surf
             mobgroup.append(i)
         return mobgroup
