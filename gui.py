@@ -5,6 +5,7 @@ Contains both the graphical, and code logic for the gui.
 
 import pygame, random
 from pygame.locals import *
+from vec2d import vec2d
 
 class GUI(object):
 	"""docstring for GUI"""
@@ -75,11 +76,11 @@ class GUI(object):
 		self.hp = player.hp
 		self.mana = player.mana
 		if self.max_hp != self.hp:
-			bar_diff = ((self.unit / self.max_hp) * self.hp)
-			self.healthbar.width = bar_diff
+			hp_bar_diff = ((self.unit / self.max_hp) * self.hp)
+			self.healthbar.width = hp_bar_diff
 		if self.max_mana != self.mana:
-			bar_diff = ((self.unit / self.max_mana) * self.mana)
-			self.manabar.width = bar_diff
+			ma_bar_diff = ((self.unit / self.max_mana) * self.mana)
+			self.manabar.width = ma_bar_diff
 		else:
 			self.manabar.width = self.unit
 		self.player_lvl = self.my_font.render(str(player.level), True, (255, 255, 255))
@@ -135,23 +136,94 @@ class GUI(object):
 
 
 
-class Power_window(object):
+class PowerWindow(object):
 	"""The powers window"""
-	def __init__(self, size):
-		self.size = int(size[0] / 1.2), int(size[1] / 1.2)
+	def __init__(self, size, player):
+		self.size = (int(size[0] / 1.2), int(size[1] / 1.2))
+		self.pos = ((size[0] % self.size[0]) / 2, (size[1] % self.size[1]) / 2)
 		self.player = player
 		self.my_font = pygame.font.SysFont("arial", 20)
+		self.state = False
 
 
-	def update(self, powers, player):
-		position1_x = int(self.size[0]/4)
-		position1_y = int(self.size[1]/5)
+	def update(self):
+		position1_x = int(self.size[0]/6)
+		position1_y = int(self.size[1]/4)
 		self.power1_msg = self.my_font.render("Magic Missile", True, (255, 255, 255))
 		self.power1_rect = pygame.Rect(position1_x, position1_y, 50, 10)
+
+		position2_x = position1_x
+		position2_y = position1_y + (self.size[1]/10)
+		self.power2_msg = self.my_font.render("Fireball", True, (255, 255, 255))
+		self.power2_rect = pygame.Rect(position2_x, position2_y, 50, 10)
+
+		position3_x = position1_x
+		position3_y = position2_y + (self.size[1]/10)
+		self.power3_msg = self.my_font.render("Cone of Ice", True, (255, 255, 255))
+		self.power3_rect = pygame.Rect(position3_x, position3_y, 50, 10)
 
 
 	def draw_window(self, surf):
 		window = pygame.Surface(self.size)
+		window.blit(self.power1_msg, self.power1_rect)
+		window.blit(self.power2_msg, self.power2_rect)
+		window.blit(self.power3_msg, self.power3_rect)
+		surf.blit(window, self.pos)
+
+class MouseOver(object):
+	"""The Mouse Over Window"""
+	def __init__(self):
+		self.state = 1
+		self.my_font = pygame.font.SysFont("arial", 15)
+
+	def mouse_img(self):
+		if self.state == 1:
+			img = pygame.image.load("Red_Sights.png").convert_alpha()
+		elif self.state >= 2:
+			img = pygame.image.load("Eye_Sights.png").convert_alpha()
+		return img
+
+	def check_mobs(self, mobs, bg):
+		if self.state == 2:
+			for mob in mobs:
+				true_pos = vec2d((self.pos[0] - bg.rect.x),(self.pos[1] - bg.rect.y))
+				distance = true_pos.get_distance(mob.pos)
+				if distance < 15:
+					self.update_txt(mob.text)
+					self.state = 3
+
+	def check_gui(self):
+		pass
+		
+
+	def update_pos(self, pos):
+		self.pos = (pos[0], pos[1] + 25)
+
+	def update_txt(self, text):
+		if text != []:
+			message = []
+			for line in text:
+				the_line = self.my_font.render(line, True, (255, 255, 255))
+				message.append(the_line)
+			
+			size = (150, len(text)*20)
+			self.window = pygame.Surface((size))
+			rect = pygame.Rect(0, 0, 5, 5)
+			x = 0
+			for msg in message:
+				self.window.blit(message[x], rect)
+				rect.y += 20
+				x += 1
+			
+		
+
+
+	def draw(self, surf):
+		if self.state == 3:
+			surf.blit(self.window, self.pos)
+			
+
+		
 
 
 		

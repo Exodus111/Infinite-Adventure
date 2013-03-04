@@ -211,6 +211,7 @@ class Mob(Entity):
 
     def update(self, time):
         self.time = time
+        self.text = [self.name, "Level: %s" % (self.lvl), "Speed: %s" % (self.speed), "This mob is pretty stupid"]
         
         
 
@@ -222,6 +223,7 @@ class Mob(Entity):
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
+            self.name = "Green Mob"
             self.rotate_img()
         elif num == 2:
             self.image = pygame.image.load("mob_red.png").convert_alpha()
@@ -230,6 +232,7 @@ class Mob(Entity):
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
+            self.name = "Red Mob"
             self.rotate_img()
         elif num == 3:
             self.image = pygame.image.load("mob_yellow.png").convert_alpha()
@@ -238,6 +241,7 @@ class Mob(Entity):
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
+            self.name = "Yellow Mob"
             self.rotate_img()
         elif num == 4:
             self.image = pygame.image.load("mob_orange.png").convert_alpha()
@@ -246,6 +250,7 @@ class Mob(Entity):
             self.rect.center = self.pos.inttup()
             self.speed = 3
             self.num = num
+            self.name = "Orange Mob"
             self.rotate_img()
         elif num == 5:
             self.image = pygame.image.load("mob_pink.png").convert_alpha()
@@ -254,6 +259,7 @@ class Mob(Entity):
             self.rect.center = self.pos.inttup()
             self.speed = 5
             self.num = num
+            self.name = "Pink Mob"
             self.rotate_img()
         elif num == 6:
             self.image = pygame.image.load("mob_white.png").convert_alpha()
@@ -262,6 +268,7 @@ class Mob(Entity):
             self.rect.center = self.pos.inttup()
             self.speed = 5
             self.num = num
+            self.name = "White Mob"
             self.rotate_img()
 
     def damage(self, dmg):

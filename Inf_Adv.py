@@ -46,13 +46,6 @@ class Game(Engine):
         # Here we start making the map. (This takes the longest time to load)
         self.rooms = self.generate_room(self.blocksize, self.background.levelsize)
         
-      
-        # Here we set up an image file for the mouse cursor 
-        # (making sure to convert it and keep transparency)
-        self.mouse_image = pygame.image.load("Red_Sights.png").convert_alpha()
-        self.mouse_rect = self.mouse_image.get_rect()
-        self.mouse_pos = (0, 0)
-        
 
         # Here I load up the player, and the variables necessary 
         # for movement and rotation.
@@ -64,7 +57,17 @@ class Game(Engine):
         
         # Here we mage the Gui
         self.gui = GUI((self.w, self.h), self.player)
+        self.power_window = PowerWindow((self.w, self.h), self.player)
+        self.mouse_over = MouseOver()
+        self.test_text = []
         
+        # Here we set up an image file for the mouse cursor 
+        # (making sure to convert it and keep transparency)
+        self.mouse_image = self.mouse_over.mouse_img()
+        self.mouse_rect = self.mouse_image.get_rect()
+        self.mouse_pos = (0, 0)
+
+
         # Then we need to set up the rooms, placing the player in the first one.
         # (and centering the screen on him)
         self.background.rect.x, self.background.rect.y = self.set_rooms(
@@ -84,6 +87,7 @@ class Game(Engine):
     # the update method. This one is called in the game_loop (from the engine) 
     # but it must be run in this file.    
     def update(self):
+        self.mouse_image = self.mouse_over.mouse_img()
         
         # Updating the gui.
         self.gui.update(self.player)
@@ -122,6 +126,8 @@ class Game(Engine):
             self.redbars.append(redbar)
             self.greenbars.append(greenbar)
 
+        self.mouse_over.check_mobs(self.l_mobs, self.background)
+
     # The draw function. This is where things are actually drawn to screen.
     # Its called in the engines mainloop, but must be run in this file.           
     def draw(self):
@@ -153,6 +159,9 @@ class Game(Engine):
             
         pygame.draw.rect(self.background.image, (255, 255, 255), self.screen_rect, -1)
         self.bg.draw(self.screen)
+        self.mouse_over.draw(self.screen)
+        if self.power_window.state == True:
+            self.power_window.draw_window(self.screen)
         self.screen.blit(self.mouse_image, self.mouse_pos) #Here we draw the mouse pointer image to the screen (NOT the background)
         self.gui.draw(self.screen)
         pygame.display.update()
@@ -212,6 +221,17 @@ class Game(Engine):
                     self.cd4 = self.delta_time + self.ring.cooldown
                 else:
                     print "Not enough Mana"
+        if key == K_p:
+            if self.power_window.state == False:
+                self.power_window.update()
+                self.power_window.state = True
+            elif self.power_window.state == True:
+                self.power_window.state = False
+        if key == K_LSHIFT:
+            self.mouse_over.update_txt(self.test_text)
+            self.mouse_over.state = 2
+
+
 
 
 
@@ -228,6 +248,8 @@ class Game(Engine):
         if key == K_3:
             self.b3 = False
             self.cone.effect.state == "DEAD"
+        if key == K_LSHIFT:
+            self.mouse_over.state = 1
     
         
     # Two event Methods for the mouse keys (down and up). buttons are 1=left , 2=middle, 3=right. 
@@ -252,6 +274,7 @@ class Game(Engine):
     # Event method for mouse motion.
     def mouse_motion(self, buttons, pos, rel):
         self.mouse_pos = pos
+        self.mouse_over.update_pos(pos)
         b_pos_x = pos[0] - self.background.rect.x 
         b_pos_y = pos[1] - self.background.rect.y
         self.b_pos = (b_pos_x, b_pos_y)
