@@ -189,9 +189,3 @@ class Ring(MagicEffect):
 			if pygame.sprite.collide_circle(self, mob):
 				mob.damage(self.damage)
 
-
-		
-
-
-		
-		

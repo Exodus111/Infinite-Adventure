@@ -34,7 +34,6 @@ class Entity(pygame.sprite.DirtySprite):
         
         for i in self.rooms:
             if sprite.rect.colliderect(i.rect) == True:
-                i.dirty_sprite(i.tiles)
                 for wall in i.walls:
                     if sprite.rect.colliderect(wall.rect) == True:
                         if direction == "UP":
@@ -45,6 +44,9 @@ class Entity(pygame.sprite.DirtySprite):
                             sprite.rect.bottom = wall.rect.top
                         if direction == "RIGHT":
                             sprite.rect.right = wall.rect.left
+                        if sprite.ident == "Player":
+                            if wall.ident == "Exit":
+                                sprite.nextlevel = True
 
         
 
@@ -63,6 +65,7 @@ class Player(Entity):
         self.rot = 0
         self.speed = 15
         self.dir = [0, 0, 0, 0]
+        self.nextlevel = False
 
         # Player info
         self.ident = "Player"
@@ -82,6 +85,18 @@ class Player(Entity):
         self.health_timer = 0.0
         self.dmg_timer = 0.0
         self.cast_time = 0.0
+
+    def drink_potion(self, potions):
+        for pot in potions:
+            if pot.rect.colliderect(self.rect):
+                print "Potion picked up"
+                
+                if pot.name == "Health Potion":
+                    self.hp += pot.strength
+                elif pot.name == "Mana Potion":
+                    self.mana += pot.strength
+                elif pot.name == "Power Potion":
+                    pass
 
     def level_init(self):
         self.leveldict = {}
@@ -130,6 +145,7 @@ class Player(Entity):
                 self.state = "NORMAL"
         if self.hp <= 0:
             print "You are DEAD!"
+            self.state = "DEAD"
             self.kill()
         self.regen()
 
@@ -201,9 +217,7 @@ class Mob(Entity):
 
     def upgrade(self, lvl):
         dif = lvl - self.lvl
-        if dif == 0:
-            pass
-        else:
+        if dif != 0:
             self.lvl = lvl
             self.max_hp += (dif * 100 * 0.2)
             self.hp = self.max_hp
@@ -211,7 +225,7 @@ class Mob(Entity):
 
     def update(self, time):
         self.time = time
-        self.text = [self.name, "Level: %s" % (self.lvl), "Speed: %s" % (self.speed), "This mob is pretty stupid"]
+        self.text = [self.name, "Level: %s" % (self.lvl), "Speed: %s" % (self.speed), self.intelligence]
         
         
 
@@ -224,6 +238,7 @@ class Mob(Entity):
             self.speed = 3
             self.num = num
             self.name = "Green Mob"
+            self.intelligence = "This mob is pretty stupid."
             self.rotate_img()
         elif num == 2:
             self.image = pygame.image.load("mob_red.png").convert_alpha()
@@ -233,6 +248,7 @@ class Mob(Entity):
             self.speed = 3
             self.num = num
             self.name = "Red Mob"
+            self.intelligence = "This mob is of average intelligence."
             self.rotate_img()
         elif num == 3:
             self.image = pygame.image.load("mob_yellow.png").convert_alpha()
@@ -242,6 +258,7 @@ class Mob(Entity):
             self.speed = 3
             self.num = num
             self.name = "Yellow Mob"
+            self.intelligence = "This mob is intelligent."
             self.rotate_img()
         elif num == 4:
             self.image = pygame.image.load("mob_orange.png").convert_alpha()
@@ -251,6 +268,7 @@ class Mob(Entity):
             self.speed = 3
             self.num = num
             self.name = "Orange Mob"
+            self.intelligence = "This mob is really smart."
             self.rotate_img()
         elif num == 5:
             self.image = pygame.image.load("mob_pink.png").convert_alpha()
@@ -260,6 +278,7 @@ class Mob(Entity):
             self.speed = 5
             self.num = num
             self.name = "Pink Mob"
+            self.intelligence = "This mob is a genius."
             self.rotate_img()
         elif num == 6:
             self.image = pygame.image.load("mob_white.png").convert_alpha()
@@ -269,6 +288,7 @@ class Mob(Entity):
             self.speed = 5
             self.num = num
             self.name = "White Mob"
+            self.intelligence = "This mob is unfathomable."
             self.rotate_img()
 
     def damage(self, dmg):
@@ -300,6 +320,7 @@ class Mob(Entity):
         if self.hp <= 0:
             player.xp += self.xp
             player.check_lvl()
+            self.state = "DEAD"
             self.kill()
         for room in rooms:
             if self.rect.colliderect(room.rect):
@@ -428,6 +449,8 @@ class Room(pygame.sprite.Sprite):
         fy = self.rect.top
         wx = (self.rect.left - (block))
         wy = (self.rect.top - (block))
+        column_wall = col + 2
+        row_wall = row + 2
         
         room_tiles = pygame.sprite.LayeredDirty()
         wall_tiles = pygame.sprite.LayeredDirty()
@@ -442,14 +465,23 @@ class Room(pygame.sprite.Sprite):
             fy += block
             fx = self.rect.left
         
-        
-        for part in range(col + 2):
-            for i in range(row + 2):
+        x = 1
+        for part in xrange(col + 2):
+            for i in xrange(row + 2):
                 i = Tile(surf, block, 1)
                 i.rect.x = wx
                 i.rect.y = wy
+                if x == 1:
+                    i.ident = "corner"
+                elif x == row_wall:
+                    i.ident = "corner"
+                elif x == (row_wall * column_wall - row_wall + 1):
+                    i.ident = "corner"
+                elif x == (row_wall * column_wall):
+                    i.ident = "corner"
                 wall_tiles.add(i)
                 wx += block
+                x += 1
                 
             wy += block
             wx = (self.rect.left - block)
@@ -469,11 +501,14 @@ class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in e
     def tile_select(self, blocksize, select):
         if select == 1:
             self.image = pygame.image.load("stone.jpg").convert()
+            self.ident = "Wall"
             self.rect = self.image.get_rect()
-        if select == 2:
-            self.image = pygame.image.load("wood_64.jpg").convert()
+        elif select == 2:
+            self.image = pygame.image.load("door_32.jpg").convert()
             self.rect = self.image.get_rect()
-        if select == 3:
+            self.ident = "Exit"
+        elif select == 3:
             self.image = pygame.image.load("blacktile.jpg").convert()
+            self.ident = "Floor"
             self.rect = self.image.get_rect()
         

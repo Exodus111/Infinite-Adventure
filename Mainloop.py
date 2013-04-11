@@ -208,7 +208,7 @@ class Engine(object):
             f_room.append((i.rect.centerx, i.rect.centery))
             
         len_froom = len(f_room)
-        player.rect.centerx, player.rect.centery = f_room[random.randint(0, len_froom)]
+        player.rect.centerx, player.rect.centery = f_room[random.randint(1, len_froom)]
         cp.centerx, cp.centery = self.find_position(player.rect.x, player.rect.y, bx, by)
 
         bx = (w/2) - cp.x
@@ -237,7 +237,24 @@ class Engine(object):
             i.bg = surf
             mobgroup.append(i)
         return mobgroup
+
     
+    def add_exit(self, rooms, block):
+        lastroom = rooms[-1]
+        x = random.randint(0, len(lastroom.walls))
+        y = 0
+        for tile in lastroom.walls:
+            if y == x:
+                if tile.ident == "corner":
+                    x += 1
+                else:
+                    walltile = tile
+            y += 1
+        temp_rect = walltile.rect
+        walltile.tile_select(block, 2)
+        walltile.rect = temp_rect
+
+
     # A quick and simple level picker
     def next_level(self, playerrect, endzonerect):
         if playerrect.colliderect(endzonerect) == True:
