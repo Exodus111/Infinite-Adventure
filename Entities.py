@@ -14,6 +14,8 @@ class Entity(pygame.sprite.DirtySprite):
         self.dirty = 1
         self.rooms = "rooms"
         self.state = "NORMAL"
+        self.shout = pygame.font.SysFont("arial", 15)
+        self.speech = "What ..?"
 
     def health_bar(self, pos, health):
         health_bar_x = pos.x - 7
@@ -22,6 +24,9 @@ class Entity(pygame.sprite.DirtySprite):
                             (health_bar_x, health_bar_y, 15, 4))
         self.screen.fill(pygame.Color("green"), 
                             (health_bar_x, health_bar_y, self.health, 4))
+
+    def feared(timer, dt):
+        pass
 
 
     def movement(self):
@@ -48,6 +53,11 @@ class Entity(pygame.sprite.DirtySprite):
                             if wall.ident == "Exit":
                                 sprite.nextlevel = True
 
+    def shout_spell(self, spell):
+        self.mssg = self.shout.render(spell, True, (255, 255, 0))
+        self.cast_time = self.time + 1.0
+        self.state = "SHOUTING"
+
         
 
 class Player(Entity):  
@@ -71,7 +81,6 @@ class Player(Entity):
         self.ident = "Player"
         self.xp = 0
         self.level = 1
-        self.shout = pygame.font.SysFont("arial", 15)
 
         # HP and Mana
         self.hp = self.level * 100
@@ -85,6 +94,7 @@ class Player(Entity):
         self.health_timer = 0.0
         self.dmg_timer = 0.0
         self.cast_time = 0.0
+
 
     def drink_potion(self, potions):
         for pot in potions:
@@ -166,11 +176,6 @@ class Player(Entity):
             print "You where hit for", dmg
             self.dmg_timer = self.time + 1.0
 
-    def shout_spell(self, spell):
-        self.mssg = self.shout.render(spell, True, (255, 255, 0))
-        self.cast_time = self.time + 1.0
-        self.state = "SHOUTING"
-
 
 
     # Movement and collision detection calls for the player 
@@ -214,6 +219,12 @@ class Mob(Entity):
         self.hp = self.max_hp
         self.time = 0
         self.xp = 25
+        self.dot_effect = False
+
+        # Speech stuff
+        self.speech_timer = 0
+        self.speech_hurt = ["Ouch!", "AAAHG!", "You Bastard! That hurt", "What the...!"]
+
 
     def upgrade(self, lvl):
         dif = lvl - self.lvl
@@ -221,15 +232,52 @@ class Mob(Entity):
             self.lvl = lvl
             self.max_hp += (dif * 100 * 0.2)
             self.hp = self.max_hp
-            self.xp = 25 * 2**(self.lvl - 1)   
+            self.xp = 25 * 2**(self.lvl - 1)
+
+    def shouting(self):
+        if self.speech == "dmg":
+            speech = random.choice(self.speech_hurt)
+            self.mssg = self.shout.render(speech, True, (255, 255, 0))
+            self.speech_timer = self.time + 1.0
+            self.state = "SHOUTING"
+            self.speech = None
+
+        if self.speech_timer <= self.time:
+            if self.speech_timer != 0:
+                self.state = "NORMAL"
+                self.speech_timer = 0
+
 
     def update(self, time):
         self.time = time
+        self.mssg_rect = (self.rect.x - 32, self.rect.y - 20)
         self.text = [self.name, "Level: %s" % (self.lvl), "Speed: %s" % (self.speed), self.intelligence]
-        
+        self.shouting()
         
 
-    def select(self, num):
+    def select_stage(self, player):
+        playerlevel = player.level
+
+        if playerlevel <= 1:
+            num = 1
+            self.select_mob(num)
+        elif playerlevel == 2:
+            num = 1
+            self.select_mob(num)
+
+        elif playerlevel == 3:
+            num = 1
+            self.select_mob(num)
+
+        elif playerlevel == 4:
+            num = 1
+            self.select_mob(num)
+
+        elif playerlevel >= 5:
+            num = 1
+            self.select_mob(num)
+
+    def select_mob(self, num):  
         if num == 1:
             self.image = pygame.image.load("mob_green.png").convert_alpha()
             self.base_image = self.image
@@ -296,10 +344,28 @@ class Mob(Entity):
         max_d = int(dmg[1])
         dmg_taken = random.randint(min_d, max_d)
         self.hp -= dmg_taken
+        self.speech = "dmg"
+
+    def dotted(self, dmg, start, stop):
+        self.damage(dmg)
+        self.dot_effect = True
+        self.dotdmg = dmg
+        self.dotter = start + 1
+        self.dotstop = stop
 
 
-    def move(self):
+
+    def move(self, dt):
         self.rect.center = self.pos.inttup()
+
+        if self.dot_effect == True:
+            if dt >= self.dotter:
+                self.damage(self.dotdmg)
+                if self.dotter <= self.dotstop:
+                    self.dotter += 1
+                else:
+                    self.dot_effect = False
+
 
     def health_bar(self):
         self.health = int(30 / self.max_hp * self.hp)
@@ -314,7 +380,7 @@ class Mob(Entity):
 
         return redbar, greenbar 
 
-    def run(self, rooms, mobs, player):
+    def run(self, rooms, mobs, player, dt):
         self.dirty = 1
         self.player = player
         if self.hp <= 0:
@@ -327,7 +393,7 @@ class Mob(Entity):
                 self.room = room
         self.patrol()
         self.collide()
-        self.move()
+        self.move(dt)
         #self.track()
         self.collide_other(mobs)
         self.collide_player()
@@ -466,25 +532,32 @@ class Room(pygame.sprite.Sprite):
             fx = self.rect.left
         
         x = 1
+        vorh = 0
         for part in xrange(col + 2):
             for i in xrange(row + 2):
                 i = Tile(surf, block, 1)
                 i.rect.x = wx
                 i.rect.y = wy
                 if x == 1:
-                    i.ident = "corner"
+                    i.ident = "Corner"
                 elif x == row_wall:
-                    i.ident = "corner"
+                    i.ident = "Corner"
                 elif x == (row_wall * column_wall - row_wall + 1):
-                    i.ident = "corner"
+                    i.ident = "Corner"
                 elif x == (row_wall * column_wall):
-                    i.ident = "corner"
+                    i.ident = "Corner"
+                elif vorh == (row_wall - 1):
+                    i.ident = "Horizontal Wall"
+                elif vorh == 0:
+                    i.ident = "Horizontal Wall"
                 wall_tiles.add(i)
                 wx += block
                 x += 1
+                vorh += 1
                 
             wy += block
             wx = (self.rect.left - block)
+            vorh = 0
                 
         return room_tiles, wall_tiles
 
@@ -501,7 +574,7 @@ class Tile(pygame.sprite.DirtySprite): # The Tile sprite, this is one block in e
     def tile_select(self, blocksize, select):
         if select == 1:
             self.image = pygame.image.load("stone.jpg").convert()
-            self.ident = "Wall"
+            self.ident = "Vertical Wall"
             self.rect = self.image.get_rect()
         elif select == 2:
             self.image = pygame.image.load("door_32.jpg").convert()

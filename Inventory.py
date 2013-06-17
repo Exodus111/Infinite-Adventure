@@ -81,15 +81,15 @@ class Potion(Inventory):
 			self.strength = (random.randint(15, 50) * self.strength)
 
 	def useage(self, player):
-		if item.name == "Health Potion":
-			player.hp += item.strength
+		if self.name == "Health Potion":
+			player.hp += self.strength
 			if player.hp > player.max_hp:
 				player.hp = player.max_hp
-		elif item.name == "Mana Potion":
-			player.mana += item.strength
+		elif self.name == "Mana Potion":
+			player.mana += self.strength
 			if player.mana > player.max_mana:
 				player.mana = player.max_mana
-		elif item.name == "Power Potion":
+		elif self.name == "Power Potion":
 			pass
 
 		

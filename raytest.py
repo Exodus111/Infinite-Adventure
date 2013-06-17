@@ -1,0 +1,109 @@
+"""
+Testing my Raycasting class
+"""
+
+import os, pygame
+from raycasting import Raycasting
+from pygame.locals import *
+
+class Main(object):
+    def __init__(self, size):
+        os.environ["SDL_VIDEO_CENTERED"] = "1"
+        pygame.init()
+        self.size = size
+        self.screen = pygame.display.set_mode(self.size)
+        self.surf = pygame.Surface(self.size)
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.ray1 = Raycasting((200, 320), (500, 50))
+        self.ray2 = Raycasting((200, 320), (200, 50))
+        self.ray3 = Raycasting((200, 320), (300, 50))
+        self.make_wall(10)
+        
+
+
+    def main_loop(self, fps=0):
+        while self.running:
+            pygame.display.set_caption("Raytest. FPS: %i" % self.clock.get_fps())
+            self.events()
+            self.update()
+            self.draw()
+            pygame.display.flip()
+            self.clock.tick(fps)
+
+    def events(self):
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                self.running = False
+
+    def update(self):
+        self.points = self.ray1.cast(self.wallgroup, 5, True)
+        self.points2 = self.ray3.cast(self.wallgroup)
+        self.collide = self.ray2.collisionany(self.wallgroup)
+        if self.collide != []:
+            print "Collision"
+
+
+        self.rectangles = []
+        if self.points != []:
+            for point in self.points:
+                rectangle = pygame.Rect(5, 5, 5, 5)
+                rectangle.center = point
+                self.rectangles.append(rectangle)
+
+        self.rectangles2 = []
+        if self.points2 != []:
+            for point in self.points2:
+                rectangle = pygame.Rect(5, 5, 5, 5)
+                rectangle.center = point
+                self.rectangles2.append(rectangle)
+
+        
+        self.myLine = self.ray1.draw_ray()
+        self.myLine2 = self.ray2.draw_ray()
+        self.myLine3 = self.ray3.draw_ray()
+
+        
+
+    def draw(self):
+        self.wallgroup.draw(self.surf)
+        pygame.draw.line(self.surf, (255, 0, 255), self.myLine[0], self.myLine[1])
+        pygame.draw.line(self.surf, (255, 0, 255), self.myLine2[0], self.myLine2[1])
+        pygame.draw.line(self.surf, (255, 0, 255), self.myLine3[0], self.myLine3[1])
+
+        if self.rectangles != []:
+            for recta in self.rectangles:
+                pygame.draw.rect(self.surf, (255, 255, 0), recta)
+
+        if self.rectangles2 != []:
+            for recta in self.rectangles2:
+                pygame.draw.rect(self.surf, (255, 255, 0), recta)
+
+        self.screen.blit(self.surf, (0,0))
+        self.surf.fill((255, 255, 255))
+
+    def make_wall(self, size):
+        self.wallgroup = pygame.sprite.LayeredDirty()
+        x = y = 200
+        num = 1
+        for wall in xrange(size):
+            wall = Tile((x,y), num)
+            self.wallgroup.add(wall)
+            x += 32
+            num += 1
+
+
+class Tile(pygame.sprite.DirtySprite):
+    """The class used to make the Tiles for the wall"""
+    def __init__(self, pos, number):
+        pygame.sprite.DirtySprite.__init__(self)
+        self.dirty = 2
+        self.image = pygame.image.load("stone.jpg").convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.number = number
+        
+game = Main((640, 480))
+game.main_loop(60)
+
+
