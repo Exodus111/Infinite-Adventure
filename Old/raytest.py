@@ -1,6 +1,5 @@
 """
-This is a test program for the Raycasting.py program I made for pygame.
-The program performs a basic test of all three types of Rays with visual representation.
+Testing my Raycasting class
 """
 
 import os, pygame
@@ -16,21 +15,15 @@ class Main(object):
         self.screen = pygame.display.set_mode(self.size)
         self.surf = pygame.Surface(self.size)
         self.clock = pygame.time.Clock()
-        self.myfont = pygame.font.SysFont("arial", 20)
-        self.text1 = self.myfont.render("Press 1, 2 or 3 to pick a Ray", True, (0,0,0))
-        self.text2 = self.myfont.render("Left Mouse Button for point A", True, (0,0,0))
-        self.text3 = self.myfont.render("Right Mouse Button for point B", True, (0,0,0))
-        self.txt1_rect = pygame.Rect(50, 10, 20, 20)
-        self.txt2_rect = pygame.Rect(50, 30, 20, 20)
-        self.txt3_rect = pygame.Rect(50, 50, 20, 20)
-
         self.running = True
         self.stage = 1
         self.ray1 = Raycasting((200, 320), (500, 50))
         self.ray2 = Raycasting((200, 320), (200, 50))
         self.ray3 = Raycasting((200, 320), (300, 50))
+        self.make_wall(10)
 
-        self.make_wall(10) # Set the Number to any amount of tiles you want in the wall
+        
+
 
     def main_loop(self, fps=0):
         while self.running:
@@ -78,8 +71,8 @@ class Main(object):
     def update(self):
         self.points = self.ray1.cast(self.wallgroup, 5, True)
         self.points2 = self.ray3.cast(self.wallgroup)
-        self.dot = self.ray2.collisionany(self.wallgroup)
-        self.dotrect = pygame.Rect(5, 5, 5, 5) 
+        self.collide = self.ray2.collisionany(self.wallgroup)
+        print self.collide
         
 
 
@@ -102,19 +95,13 @@ class Main(object):
         self.myLine2 = self.ray2.draw_ray()
         self.myLine3 = self.ray3.draw_ray()
 
+        
+
     def draw(self):
         self.wallgroup.draw(self.surf)
-        self.surf.blit(self.text1, self.txt1_rect)
-        self.surf.blit(self.text2, self.txt2_rect)
-        self.surf.blit(self.text3, self.txt3_rect)
-
         pygame.draw.line(self.surf, (255, 0, 255), self.myLine[0], self.myLine[1])
         pygame.draw.line(self.surf, (255, 0, 255), self.myLine2[0], self.myLine2[1])
         pygame.draw.line(self.surf, (255, 0, 255), self.myLine3[0], self.myLine3[1])
-
-        if self.dot != []:
-            self.dotrect.center = self.dot[0]
-            pygame.draw.rect(self.surf, (255, 255, 0), self.dotrect)
 
         if self.rectangles != []:
             for recta in self.rectangles:
@@ -143,7 +130,7 @@ class Tile(pygame.sprite.DirtySprite):
     def __init__(self, pos, number):
         pygame.sprite.DirtySprite.__init__(self)
         self.dirty = 2
-        self.image = pygame.image.load("images/stone.jpg").convert()
+        self.image = pygame.image.load("stone.jpg").convert()
         self.rect = self.image.get_rect()
         self.rect.center = pos
         self.number = number

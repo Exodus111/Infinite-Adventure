@@ -4,9 +4,9 @@ It uses pygame's rect collisions to make the ray collisions easy to handle.
 The class requires the starting and ending positions (x,y tupples) of the ray.
 """
 
-import pygame, random, math
+import pygame, math
 from pygame.locals import *
-from pygame import vec2d
+from vec2d import vec2d
 
 class Raycasting(object):
 	"""A Raycasting object made utilizing Pygame's rect collision function"""
@@ -16,25 +16,27 @@ class Raycasting(object):
 
 	
 	"""
-	If the ray collides with any sprite in the group,
-	this returns a list of the X,Y coords of the collision point that is the closest to the center of the colliding sprite.
-	Returns an empty list if there are no collisions. (What it should probably be used for) 
+	If the ray collides with any sprite (any wall) in the group,
+	this returns a list of collision points if any collision occurs
+	If not it returns an empty list (probably the most useful)
 	"""	
 	def collisionany(self, tiles):
-		collisions = []
-		self.ray = self.target - self.pos
+		collisions = None
+		dot = []
 		for tile in tiles:
+			ray = self.target - self.pos
 			centralpoint = vec2d(tile.rect.center)
 			hypothenuse = centralpoint - self.pos
-			angle = hypothenuse.get_angle_between(self.ray)
+			angle = hypothenuse.get_angle_between(ray)
 			radians = math.radians(angle)
 			adjecent = math.cos(radians) * hypothenuse.length
-			self.ray.length = adjecent
-			point = self.pos + self.ray
-			if tile.rect.collidepoint(point):
-				collisions.append(point.inttup())
+			if adjecent > 0 and adjecent <= ray.length:
+				ray.length = adjecent
+				point = self.pos + ray
+				if tile.rect.collidepoint(point.inttup()):
+					dot.append(point.inttup())
 
-		return collisions
+		return dot
 
 
 	"""

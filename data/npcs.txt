@@ -1,0 +1,7 @@
+"images/player.png",
+"images/mob_green.png",
+"images/mob_yellow.png",
+"images/mob_orange.png",
+"images/mob_pink.png",
+"images/mob_red.png",
+"images/mob_white.png"

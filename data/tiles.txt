@@ -1,0 +1,3 @@
+images/stone.jpg
+images/blacktile.jpg
+images/door_32.jpg
