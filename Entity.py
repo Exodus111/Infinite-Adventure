@@ -12,6 +12,7 @@ class Entity(pygame.sprite.DirtySprite):
 	def __init__(self):
 		pygame.sprite.DirtySprite.__init__(self)
 		self.dirty = 1
+		self.collide_rect = pygame.Rect(1, 1, 256, 256)
 
 	def update(self, dt):
 		pass
@@ -29,14 +30,20 @@ class Player(Entity):
 		self.pos = vec2d(pos)
 		self.dir = vec2d(direction)
 		self.speed = 5
-		self.collision = Collision(self.pos)
+		self.collision = Collision(self)
 		self.arrows = [0,0,0,0]
+
+		self.name = "Ragnok The Awesome"
+		self.title = "Slayer of Unicorns"
+		self.level = 1
+		self.old_level = 1
 
 	def update(self, tiles, dt):
 			self.dirty = 1
 			self.move()
 			self.rect.center = self.pos.inttup()
-			self.pos = self.collision.collide(tiles, self.pos, self.rect)
+			self.collide_rect.center = self.rect.center
+			self.pos = self.collision.quad_collide(tiles, self)
 			self.rect.center = self.pos.inttup()
 
 	def move(self):
