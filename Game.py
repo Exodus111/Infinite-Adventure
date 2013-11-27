@@ -20,10 +20,9 @@ class Game(Engine):
     def __init__(self):
         self.size = (1024, 960)
         Engine.__init__(self, self.size)
+        map_size = (5000, 5000)
 
-        self.surf = Surfaces((5000, 5000), self.size)
-        self.surf_m = None
-        self.surf_r = None
+        self.surf = Surfaces(map_size, self.size)
 
         self.player = Player("images/player.png", (self.size[0]/2, self.size[1]/2), (0, 0))
         self.mobgroup = pygame.sprite.LayeredDirty()
@@ -32,20 +31,31 @@ class Game(Engine):
         self.npc_imgs = [line.strip() for line in open("data/npcs.txt")]
         self.menu_imgs = [line.strip() for line in open("data/menu.txt")]
         self.level = Levelgen(self.tile_imgs)
-        self.rooms = self.level.make_dungeon((0,0), (5000, 5000), (4, 20), 32, 50)
+        self.rooms = self.level.make_dungeon((150, 150), map_size, (8, 32), 32, 50)
         self.player_menu = Gui(self.menu_imgs[0], self.size, 1.5)
         self.player_menu.make_dynamic_text((155, 130), str(self.player.level), (255, 0, 0))
         self.player_menu.make_dynamic_text((300, 70), self.player.name, (0,0,0))
         self.player_menu.make_dynamic_text((450, 150), self.player.title, (0,0,0), 30)
         self.p_menu = False
 
+        self.active_sprites = pygame.sprite.LayeredDirty()
+        start_pos = self.rooms[0].nw_rect.center
+        self.player.rect.center = start_pos
+        self.player.screen_rect.w = self.size[0]*2
+        self.player.screen_rect.h = self.size[1]*2
 
-
+        for i in self.rooms:
+            for s in self.rooms:
+                 pygame.sprite.groupcollide(s.walls, i.floor, True, False)
 
 
     def update(self):
         # Surface
-        self.surf_m, self.surf_r = self.surf.update_surface(self.player.pos.inttup())
+        self.surf.update_surface(self.player.pos.inttup(), self.player.speed)
+        for room in self.rooms:
+            self.active_sprites.add(room.walls)
+            self.active_sprites.add(room.floor)
+        self.active_sprites.set_clip(self.player.screen_rect)
 
         # Mobs
         self.mobgroup.update(self.rooms, self.dt)
@@ -62,16 +72,20 @@ class Game(Engine):
     
     def draw(self):
         # Background
-        for rooms in self.rooms: 
-            rooms.floor.draw(self.surf_m)
-            rooms.walls.draw(self.surf_m)
+        self.active_sprites.draw(self.surf.surface)
+
+        """ This section is to test the Collisions visually
+        pygame.draw.rect(self.surf.surface, (255, 255, 255), self.player.collide_rect, 2)
+        for tile in self.player.collision.current_quad:
+            pygame.draw.rect(self.surf.surface, (255, 255, 255), tile)
+        """
 
         # Dynamic Objects
-        self.mobgroup.draw(self.surf_m)
+        self.mobgroup.draw(self.surf.surface)
 
         # Surface
 
-        self.screen.blit(self.surf_m, self.surf_r)
+        self.screen.blit(self.surf.surface, self.surf.rect)
 
         # Gui Menues
         if self.p_menu == True:
@@ -84,13 +98,14 @@ class Game(Engine):
     
     def key_down(self, key):
         if key in (K_w, K_UP):
-            self.player.arrows[0] = 1
+            self.player.arrows[0] = 1     
         if key in (K_a, K_LEFT):
-            self.player.arrows[1] = 1
+            self.player.arrows[1] = 1  
         if key in (K_s, K_DOWN):
-            self.player.arrows[2] = 1
+            self.player.arrows[2] = 1     
         if key in (K_d, K_RIGHT):
             self.player.arrows[3] = 1
+        
         if key == K_ESCAPE:
             pygame.quit()
         if key == K_o:
@@ -119,8 +134,5 @@ class Game(Engine):
     def mouse_motion(self, buttons, pos, rel):
         pass
 
-
 s = Game()
 s.main_loop(fps)
-
-		

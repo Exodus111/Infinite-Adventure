@@ -74,7 +74,7 @@ class Tile(pygame.sprite.DirtySprite):
     """The class used to make the Tiles for walls and floors"""
     def __init__(self, img, pos, number):
         pygame.sprite.DirtySprite.__init__(self)
-        self.dirty = 1
+        self.dirty = 2
         self.image = pygame.image.load(img).convert()
         self.rect = self.image.get_rect()
         self.rect.center = pos
@@ -87,6 +87,7 @@ class Surfaces(object):
         self.screen_center = (screen_size[0]/2, screen_size[1]/2) 
         self.amount = amount
         self._generate_surfaces()
+        self.var = 1
         
 
     def _generate_surfaces(self):
@@ -98,23 +99,22 @@ class Surfaces(object):
         elif self.amount == 8:
             pass
 
-    def update_surface(self, pos):
+    def update_surface(self, pos, speed):
         if self.amount == 1:
-            centerv = vec2d(self.screen_center[0] - self.rect.x, self.screen_center[1] - self.rect.y)
+            centerv = vec2d(self.screen_center[0] - self.rect.x, 
+                            self.screen_center[1] - self.rect.y)
             playerv = vec2d(pos)
-            surfv = vec2d(self.rect.topleft)
-            move = playerv - centerv
             distance = centerv.get_distance(playerv)
-            if distance >= 20:
-                move.length = 5
+            if distance >= 50:
+                surfv = vec2d(self.rect.topleft)
+                move = playerv - centerv
+                move.length = speed *(distance/50)
                 surfv -= move
                 self.rect.topleft = surfv.inttup()
                 if self.rect.x > 0:
                     self.rect.x = 0
                 if self.rect.y > 0:
                     self.rect.y = 0
-
-            return self.surface, self.rect
         elif self.amount == 4:
             pass
         elif self.amount == 8:

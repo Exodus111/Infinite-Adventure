@@ -12,7 +12,7 @@ class Entity(pygame.sprite.DirtySprite):
 	def __init__(self):
 		pygame.sprite.DirtySprite.__init__(self)
 		self.dirty = 1
-		self.collide_rect = pygame.Rect(1, 1, 256, 256)
+		self.collide_rect = pygame.Rect(1, 1, 64, 64)
 
 	def update(self, dt):
 		pass
@@ -30,6 +30,7 @@ class Player(Entity):
 		self.pos = vec2d(pos)
 		self.dir = vec2d(direction)
 		self.speed = 5
+		self.screen_rect = pygame.Rect(1, 1, 256, 256)
 		self.collision = Collision(self)
 		self.arrows = [0,0,0,0]
 
@@ -40,30 +41,42 @@ class Player(Entity):
 
 	def update(self, tiles, dt):
 			self.dirty = 1
-			self.move()
-			self.rect.center = self.pos.inttup()
+			if self.arrows != [0,0,0,0]:
+				self.move()
+				self.movement_speed(dt)
 			self.collide_rect.center = self.rect.center
-			self.pos = self.collision.quad_collide(tiles, self)
-			self.rect.center = self.pos.inttup()
-
+			self.screen_rect.center = self.rect.center
+			self.collision.quad_collide(tiles, self)
+			
 	def move(self):
-		if self.arrows[0] == 1: #up
-			self.dir[1] = -5
-		
-		if self.arrows[1] == 1: #left
-			self.dir[0] = -5
-		
-		if self.arrows[2] == 1: #down
-			self.dir[1] = 5
-		
-		if self.arrows[3] == 1: #right
-			self.dir[0] = 5
+		if self.arrows[0]: #Up
+			self.rect.y -= self.speed
+			self.collision.player_collision(self, "Up")
+			self.pos = vec2d(self.rect.center)
+		if self.arrows[1]: #Left
+			self.rect.x -= self.speed
+			self.collision.player_collision(self, "Left")
+			self.pos = vec2d(self.rect.center)
+		if self.arrows[2]: #Down
+			self.rect.y += self.speed
+			self.collision.player_collision(self, "Down")
+			self.pos = vec2d(self.rect.center)
+		if self.arrows[3]: #Right
+			self.rect.x += self.speed
+			self.collision.player_collision(self, "Right")
+			self.pos = vec2d(self.rect.center)
+
+	def movement_speed(self, dt):
+		speed = 1.0
+		timer = 1 + dt
 		
 
+
+	def move_vec(self):
 		if self.arrows != [0,0,0,0]:
 			self.dir.length = self.speed
 			self.pos += self.dir
-
+			self.rect.center = self.pos.inttup()
 		
 		
 		
