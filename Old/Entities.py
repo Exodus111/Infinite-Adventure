@@ -6,7 +6,6 @@ Created on Jan 19, 2013
 import pygame, random
 from pygame.locals import *
 from vec2d import vec2d
-from raycasting import Raycasting
 import Mainloop
 
 class Entity(pygame.sprite.DirtySprite):
@@ -221,14 +220,11 @@ class Mob(Entity):
         self.time = 0
         self.xp = 25
         self.dot_effect = False
-        self.wallcoll = False
 
         # Speech stuff
         self.speech_timer = 0
-        self.silence_timer = 0
         self.speech_hurt = ["Ouch!", "AAAHG!", "You Bastard! That hurt", "What the...!"]
-        self.speech_seeya = ["I see you there", "There you are"]
-        self.speech_lost = ["Where did he go", "I know you're back there"]
+
 
     def upgrade(self, lvl):
         dif = lvl - self.lvl
@@ -239,32 +235,17 @@ class Mob(Entity):
             self.xp = 25 * 2**(self.lvl - 1)
 
     def shouting(self):
-        if self.state == "NORMAL" and self.silence_timer <= self.time:
-
-            if self.speech == "dmg":
-                speech = random.choice(self.speech_hurt)
-                self.mssg = self.shout.render(speech, True, (255, 255, 0))
-                self.speech_timer = self.time + 1.0
-                self.state = "SHOUTING"
-                self.speech = None
-            elif self.speech == "caught":
-                speech = random.choice(self.speech_seeya)
-                self.mssg = self.shout.render(speech, True, (255, 0, 0))
-                self.speech_timer = self.time + 2.0
-                self.state = "SHOUTING"
-                self.speech = None
-            elif self.speech == "lost":
-                speech = random.choice(self.speech_lost)
-                self.mssg = self.shout.render(speech, True, (0, 255, 0))
-                self.speech_timer = self.time + 2.0
-                self.state = "SHOUTING"
-                self.speech = None
+        if self.speech == "dmg":
+            speech = random.choice(self.speech_hurt)
+            self.mssg = self.shout.render(speech, True, (255, 255, 0))
+            self.speech_timer = self.time + 1.0
+            self.state = "SHOUTING"
+            self.speech = None
 
         if self.speech_timer <= self.time:
             if self.speech_timer != 0:
                 self.state = "NORMAL"
                 self.speech_timer = 0
-                self.silence_timer = self.time + random.randint(5, 15)
 
 
     def update(self, time):
@@ -373,11 +354,24 @@ class Mob(Entity):
         self.dotstop = stop
 
 
+
+    def move(self, dt):
+        self.rect.center = self.pos.inttup()
+
+        if self.dot_effect == True:
+            if dt >= self.dotter:
+                self.damage(self.dotdmg)
+                if self.dotter <= self.dotstop:
+                    self.dotter += 1
+                else:
+                    self.dot_effect = False
+
+
     def health_bar(self):
         self.health = int(30 / self.max_hp * self.hp)
         health_bar_x = self.pos.x - 15
         health_bar_y = self.pos.y - 15
-        if self.max_hp != self.hp:
+        if (self.lvl * 100) != self.hp:
             redbar = pygame.Rect(health_bar_x, health_bar_y, 30, 4)
             greenbar = pygame.Rect(health_bar_x, health_bar_y, self.health, 4)
         else:
@@ -394,41 +388,26 @@ class Mob(Entity):
             player.check_lvl()
             self.state = "DEAD"
             self.kill()
-        self.rooms = rooms
         for room in rooms:
             if self.rect.colliderect(room.rect):
                 self.room = room
-        track = self.track(player)
-        if track == False:
-            self.patrol()
+        self.patrol()
         self.collide()
+        self.move(dt)
+        #self.track()
         self.collide_other(mobs)
         self.collide_player()
-        self.move(dt)
-
-    def move(self, dt):
-        
-        if self.wallcoll == True:
-            self.pos -= self.dir
-        else:
-            self.pos += self.dir
-
-        self.rect.center = self.pos.inttup()
-        if self.dot_effect == True:
-            if dt >= self.dotter:
-                self.damage(self.dotdmg)
-                if self.dotter <= self.dotstop:
-                    self.dotter += 1
-                else:
-                    self.dot_effect = False
         
 
     def collide(self):
         for wall in self.room.walls:
             if self.rect.colliderect(wall):
-                self.wallcoll = True
-            else:
-                self.wallcoll = False
+                shove = vec2d(wall.rect.center) - self.pos
+                shove.length = self.speed
+                self.pos -= shove
+                self.dir.x *= -1
+                self.dir.y *= -1
+                self.rotate_img()
 
     def collide_other(self, mobs):
         for mob in mobs:
@@ -452,54 +431,48 @@ class Mob(Entity):
             self.player.damage((self.lvl * 20))
             
 
-    def rotate(self):
+    def rotate(self, angle):
+        self.dir.rotate(angle)
         self.rotate_img()
 
     def rotate_img(self):
         self.image = pygame.transform.rotate(self.base_image, -self.dir.angle)
 
     def patrol(self):
-        self.counter += 5
-        if self.counter > random.randint(100, 1000):
-            x = 1
-            select = random.randint(1, len(self.room.tiles))
-            for i in self.room.tiles:
-                if x == select:
-                    new_direction = vec2d(i.rect.center)
-                    break
-                x += 1
-            self.movement(new_direction, 1)
-            self.counter = 0
+        if self.room != 0:
+            move = vec2d(self.dir.x * self.speed * 60, self.dir.y * self.speed * 60)
+            if move.length > self.speed:
+                move.length = self.speed
+            self.pos += move
+            self.counter += 5
+            if self.counter > random.randint(600, 1000):
+                angle = 45 * random.randint(-4, 4)
+                self.rotate(angle)
+                self.counter = 0
                 
     # Here the NPC will track its target. (Usually the player) 
     def track(self, target):
-        collied = False
-        if self.pos.get_distance(target.pos) <= 400:
-            ray = Raycasting(self.pos.inttup(), target.pos.inttup())
-            for room in self.rooms:
-                collided = ray.collisionany(room.walls)
-            print collided
-            if collided == False:
-                self.speech = "caught"
-                self.movement(target.pos, 3)
-                return collided
-            else:
-                self.speech = "lost"
-                return collided
-        else:
-            return True
-         
+        if self.rect.x + 500 > target.rect.x:
+            if self.rect.x - 500 < target.rect.x:
+                if self.rect.y + 500 > target.rect.y:
+                    if self.rect.y - 500 < target.rect.y:
+                        pass
 
 
      # movement for the NPC with collision detection.                   
-    def movement(self, target, speed=None):
-        if speed != None:
-            self.speed = speed
-        self.dir = target - self.pos
-        self.dir.length = self.speed
-        self.rotate()
-        
-        
+    def movement(self):
+        if self.npcmove[0] == 1:
+            self.rect.y -= self.speed
+            self.collision(self.rect, "UP")
+        if self.npcmove[1] == 1:
+            self.rect.x -= self.speed
+            self.collision(self.rect, "LEFT")
+        if self.npcmove[2] == 1:
+            self.rect.y += self.speed
+            self.collision(self.rect, "DOWN")
+        if self.npcmove[3] == 1:
+            self.rect.x += self.speed
+            self.collision(self.rect, "RIGHT")
 
 
 class GameSurface(pygame.sprite.DirtySprite):

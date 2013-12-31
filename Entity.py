@@ -1,4 +1,5 @@
 """
+2.0
 Entity class, that iterates to Player and Mob classes
 """
 

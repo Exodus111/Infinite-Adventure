@@ -1,4 +1,5 @@
 """
+2.0		
 The Gui class for the game.
 """
 
