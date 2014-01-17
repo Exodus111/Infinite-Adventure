@@ -79,10 +79,7 @@ class Main(object):
         self.points = self.ray1.cast(self.wallgroup, 5, True)
         self.points2 = self.ray3.cast(self.wallgroup)
         self.dot = self.ray2.collisionany(self.wallgroup)
-        self.dotrect = pygame.Rect(5, 5, 5, 5) 
-        
-
-
+        self.dotrect = pygame.Rect(5, 5, 5, 5)
         self.rectangles = []
         if self.points != []:
             for point in self.points:
@@ -97,7 +94,7 @@ class Main(object):
                 rectangle.center = point
                 self.rectangles2.append(rectangle)
 
-        
+
         self.myLine = self.ray1.draw_ray()
         self.myLine2 = self.ray2.draw_ray()
         self.myLine3 = self.ray3.draw_ray()
@@ -147,7 +144,7 @@ class Tile(pygame.sprite.DirtySprite):
         self.rect = self.image.get_rect()
         self.rect.center = pos
         self.number = number
-        
+
 game = Main((640, 480))
 game.main_loop(60)
 
