@@ -19,12 +19,12 @@ class Levelgen(object):
  		self.max_size = minmax_row[1] * block
  		self.minmax_row = minmax_row
  		self.mydungeon = []
- 		self.room_size = (self.myrandom.randrange(self.minmax_row[0], self.minmax_row[1]), 
+ 		self.room_size = (self.myrandom.randrange(self.minmax_row[0], self.minmax_row[1]),
  						self.myrandom.randrange(self.minmax_row[0], self.minmax_row[1]))
  		direction = 0
  		making = True
  		while making == True:
- 			
+
  			if direction == 0: # Right
  				self.start = (self.start[0] - block*2, self.start[1])
  			elif direction == 1: # Left
@@ -32,14 +32,14 @@ class Levelgen(object):
  			elif direction == 2: # Up
  				self.start = (self.start[0], self.start[1] - self.room_size[1]*block + block*2)
  			elif direction == 3: # Down
- 				self.start = (self.start[0], self.start[1] - block*2) 
+ 				self.start = (self.start[0], self.start[1] - block*2)
  			room = self.make_room(self.start, self.room_size, block)
- 			
+
  			self.mydungeon.append(room)
  			self.direction = [0, 1, 2, 3]
  			direction = self.pick_direction(surf_size, room)
  			if direction != None:
- 				self.pick_room(direction, ch_corr)	
+ 				self.pick_room(direction, ch_corr)
  			else:
  				making = False
 
@@ -119,7 +119,7 @@ class Levelgen(object):
  		return check
 
  	def pick_room(self, direction, ch_corr):
- 		self.room_size = (self.myrandom.randrange(self.minmax_row[0], self.minmax_row[1]), 
+ 		self.room_size = (self.myrandom.randrange(self.minmax_row[0], self.minmax_row[1]),
  						self.myrandom.randrange(self.minmax_row[0], self.minmax_row[1]))
  		if ch_corr >= self.myrandom.randint(1, 100):
  			if direction == 0: # Right
@@ -148,7 +148,10 @@ class Room(object):
 		self.floor = pygame.sprite.LayeredDirty()
  		self.walls = pygame.sprite.LayeredDirty()
 		self._generate()
-		self.rect = pygame.Rect(self.start[0], self.start[1], size[0]*block, size[1]*block)
+		self.setup_rects()
+
+	def setup_rects(self):
+		self.rect = pygame.Rect(self.start[0], self.start[1], self.size[0]*self.block, self.size[1]*self.block)
 		self.floor_rect = self.f_rect()
 
 		self.nw_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.w/2, self.rect.h/2)
@@ -172,7 +175,7 @@ class Room(object):
 		x = self.start[0]
  		y = self.start[1]
  		num = 1
- 
+
  		for col in xrange(self.size[1]):
  			for row in xrange(self.size[0]):
  				if x == self.start[0] or x == (self.start[0] + self.size[0] * self.block - self.block ) or y == self.start[1] or y == (self.start[1] + self.size[1] * self.block - self.block):

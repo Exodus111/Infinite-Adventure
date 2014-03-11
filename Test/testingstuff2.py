@@ -1,16 +1,18 @@
 
-mydict = {"add":"stuff"}
 
-x= 1
+import numpy as np
 
-for i in xrange(10):
-    z = "added{0}".format(x)
-    mydict[z] = "Stuffier"
-    x += 1
+a = np.zeros((6,6), dtype=int)
 
-for k in mydict.keys():
-    if "add" in k:
-        print mydict[k]
+b = a.copy()
+
+a[1,1] = 8
+print a
+print b
+
+
+
+
 
 
 

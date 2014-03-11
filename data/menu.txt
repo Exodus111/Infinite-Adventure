@@ -1,4 +1,5 @@
 images/player_menu.jpg
 images/start_menu.jpg
-images/powers_menu.jpg
+images/menu_bar.png
 images/death_menu.jpg
+images/Red_Sights.png
